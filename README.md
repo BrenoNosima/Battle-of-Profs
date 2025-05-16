@@ -1,33 +1,69 @@
-# Teste
 
-This template should help get you started developing with Vue 3 in Vite.
+# 🎮 Battle of Profs
 
-## Recommended IDE Setup
+> Um jogo de batalha 1x1 onde o estudante enfrenta professores mestres das artes marciais digitais, rumo à graduação na lendária **Faculdade do Código Supremo**.
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 📜 Resumo do Enredo
 
-## Type Support for `.vue` Imports in TS
+Em um universo paralelo dentro de uma universidade, os professores se tornaram mestres de linguagens de programação e conceitos tecnológicos. O jogador, um aluno em busca da sabedoria máxima, deve vencer cada professor em batalhas épicas para conquistar seu diploma virtual.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+## 🧠 Objetivo do Jogador
 
-## Customize configuration
+* Enfrentar professores em batalhas 1x1.
+* Vencer todas as fases para se formar.
+* Cada fase aumenta em dificuldade e apresenta novos golpes e desafios.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## ⚔️ Regras Básicas do Jogo
 
-## Project Setup
+* 🎮 Jogo singleplayer.
+* 🧍 O jogador controla um personagem pré-definido.
+* 🤼‍♂️ Batalhas 1x1 contra professores.
+* 🩸 Vence quem zerar primeiro a barra de vida do oponente.
+* ⌨️ Controles via teclado (setas para movimento, teclas para ataque e defesa).
+* ✨ Cada personagem possui golpes especiais.
+* 🏁 O jogo termina após vencer todos os professores.
 
-```sh
-npm install
-```
+## 🧑‍💻 Equipe de Desenvolvimento
 
-### Compile and Hot-Reload for Development
+| Integrantes                | 
+| -------------------------- | 
+| Breno Bertaglia Nosima     |                            
+| Carlos Eduardo Carfi Silva |                            
+| Felipe Galeti Gôngora      |                           
+| Henrique Kendi Ikeda       |                            
+| Leonardo Bezerra da Silva  |                            
+| Thiago Gimenes Santos      |                            
 
-```sh
-npm run dev
-```
+> ⚠️ *A distribuição específica de tarefas será definida conforme a evolução do projeto.*
 
-### Type-Check, Compile and Minify for Production
+## 🖼️ Wireframes & Esboços
 
-```sh
-npm run build
-```
+* **Tela Inicial:** Menu com seleção de fases e opções básicas.
+* **Batalha:** Arena com barra de vida, golpes e HUD.
+* **Personagens:** Visual “pixelado” com características marcantes de cada professor.
+* **Fundo do jogo:** Em processo de definição.
+
+## 🧰 Stack Tecnológica
+
+* **Vue.js** – Framework principal para estrutura do jogo.
+* **JavaScript** – Lógica de jogo e interações.
+* **HTML5 & CSS3** – Estrutura base e estilização.
+* **Figma / Canva** – Prototipagem e wireframes.
+* **Git & GitHub** – Versionamento e colaboração.
+* *(Outras tecnologias a serem definidas)*
+
+## 🚧 Status do Projeto
+
+> ✅ **Em desenvolvimento**
+> 🔜 Etapas futuras incluem:
+>
+> * Animações e colisões
+> * IA básica para os professores
+> * Implementação das fases e progressão
+
+## 📌 Licença
+
+Este projeto é de uso educacional. Licença a definir.
+
+
+
