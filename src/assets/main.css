@@ -3,6 +3,14 @@ body {
   font-family: sans-serif;
 }
 
-#__vue-devtools-container__ {
+.vue-devtools__anchor-btn{
+  display: none !important;
+}
+
+.vue-devtools__panel{
+  display: none !important;
+}
+
+.vue-devtools__anchor-btn{
   display: none !important;
 }
