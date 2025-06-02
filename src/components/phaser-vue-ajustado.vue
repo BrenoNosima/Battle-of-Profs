@@ -1120,7 +1120,6 @@ export default {
             spark.lineTo(px, py);
             spark.strokePath();
             spark.setAlpha(1);
-            spark.setDepth(300);
             this.tweens.add({
               targets: spark,
               alpha: 0,
