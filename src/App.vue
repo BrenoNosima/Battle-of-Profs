@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import PhaserVueMinimo from './components/phaser-vue-ajustado.vue'
+import PhaserVueMinimo from './components/GameContainer.vue'
 
 export default {
   name: 'App',
