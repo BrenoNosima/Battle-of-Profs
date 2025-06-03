@@ -1,24 +1,11 @@
-/**
- * main.js
- * 
- * Ponto de entrada da aplicação Vue.
- * Configura e inicializa a aplicação Vue com o componente App.
- */
-
 import { createApp } from 'vue';
-import App from './components/App.vue';
+import App from './App.vue'; // Corrigido: App.vue está na raiz de src
 
-// Importar estilos globais se necessário
-// import './assets/styles.css';
+// Importar estilos globais, se necessário (já importados em App.vue)
+// import './assets/main.css';
 
-// Criar e montar a aplicação Vue
 const app = createApp(App);
 
-// Registrar plugins globais se necessário
-// app.use(plugin);
-
-// Montar a aplicação no elemento com id 'app'
+// Montar a aplicação no elemento com id 'app' definido em index.html
 app.mount('#app');
 
-// Exportar a instância do app para uso em outros arquivos se necessário
-export default app;
