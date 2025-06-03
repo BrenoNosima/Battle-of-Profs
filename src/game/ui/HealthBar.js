@@ -36,9 +36,11 @@ export default class HealthBar {
         // Parâmetros
         const radius = 14;
         const spacing = 10;
-        const padding = 6;
+        const padding = 10;
 
         const fullWidth = this.width + (radius * 5 + spacing * 5); // espaço para as bolinhas
+        
+
 
         // Fundo branco com borda arredondada
         this.bgGraphics.fillStyle(this.bgColor, 1);
