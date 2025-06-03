@@ -10,7 +10,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         this.health = 100;
         this.attackCooldown = false;
-        this.speed = 120; // Slower speed for the enemy
+        this.speed = 200; // Slower speed for the enemy
         this.attackRange = 80; // Range to initiate attack
         this.pursuitRange = 300; // Range to start chasing
         this.attackDamage = 15;
@@ -38,11 +38,17 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         const distance = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
 
+        
+
         // Update direction based on player position
         if (player.x < this.x) {
             this.flipX = true;
         } else {
             this.flipX = false;
+        }
+
+        if (distance < 200 && Phaser.Math.Between(0, 1000) < 5) {
+            this.jump();
         }
 
         // AI Behavior
@@ -152,5 +158,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         // Death logic is checked in the scene (checkRoundEnd)
     }
-}
 
+    jump() {
+        if (this.body.onFloor()) {
+            this.setVelocityY(-600); // Adjust jump height as needed
+            console.log("Enemy: Saltando");
+        }
+    }
+}
