@@ -45,6 +45,8 @@ export default class FightScene extends Phaser.Scene {
     console.log('FightScene: Preload iniciado');
     this.load.spritesheet('player', '/sprite/sprite.png', { frameWidth: 235, frameHeight: 350 }); // Assuming served from public root
     this.load.spritesheet('enemy', '/sprite/sprite.png', { frameWidth: 235, frameHeight: 350 }); // Assuming served from public root
+    this.load.spritesheet('player', 'sprite/moreno_escudo.png', { frameWidth: 240, frameHeight: 320 });
+
     try {
       this.load.image('background', '/backgrounds/menu.png'); // Assuming served from public root
       console.log('FightScene: Tentando carregar background');
@@ -98,7 +100,9 @@ export default class FightScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys({
       a: Phaser.Input.Keyboard.KeyCodes.A,
       d: Phaser.Input.Keyboard.KeyCodes.D,
-      space: Phaser.Input.Keyboard.KeyCodes.SPACE
+      space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      w: Phaser.Input.Keyboard.KeyCodes.W,
+      shift: Phaser.Input.Keyboard.KeyCodes.SHIFT
     });
 
     this.roundOver = false;

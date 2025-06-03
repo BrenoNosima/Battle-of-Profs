@@ -21,11 +21,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.setOffset(70, 80); // Ajustar offset da hitbox se necessário
 
         console.log("Player: Entidade criada");
+
+        this.blockSprite = scene.add.sprite(this.x, this.y, 'moreno_escudo');
+        this.blockSprite.setVisible(false);
+        this.blockSprite.setDepth(10); // Ficar acima do jogador
+        this.blockSprite.setScale(1.2);
+        this.blockSprite.setOrigin(0.5);
     }
 
     update(keys) {
         // Resetar velocidade horizontal (manter vertical para gravidade)
         this.setVelocityX(0);
+        this.blockSprite.setPosition(this.x, this.y);
+
 
         // Movimento com A e D
         if (keys.a.isDown) {
@@ -49,9 +57,21 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             }
         }
 
+        // Pulo com W
+        if (keys.w.isDown && this.body.onFloor()) {
+            this.setVelocityY(-500); // Ajustar altura do pulo
+            console.log("Player: Pulando");
+        }
+
         // Ataque com espaço
         if (Phaser.Input.Keyboard.JustDown(keys.space) && !this.attackCooldown) {
             this.attack();
+        }
+
+         if (keys.shift.isDown) {
+        this.startBlock();
+        } else {
+            this.stopBlock();
         }
     }
 
@@ -119,6 +139,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     takeDamage(amount) {
+
+         if (this.isBlocking) {
+            console.log("Ataque bloqueado! Sem dano recebido.");
+            return; // bloqueia o dano
+        }
+
         if (this.health <= 0) return; // Já derrotado
 
         this.health -= amount;
@@ -133,7 +159,27 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.clearTint();
         });
 
-        // Lógica de morte é verificada na cena (checkRoundEnd)
     }
+
+    startBlock() {
+    if (!this.isBlocking) {
+        this.isBlocking = true;
+        this.blockSprite.setVisible(true);
+        this.setTint(0x00ffff); // Visual extra
+        this.play('player-block', true); // <-- Troca para animação de bloqueio
+        console.log("Player está bloqueando");
+    }
+}
+
+    stopBlock() {
+        if (this.isBlocking) {
+            this.isBlocking = false;
+            this.blockSprite.setVisible(false);
+            this.clearTint();
+            this.play('player-idle', true); // <-- Volta para idle
+            console.log("Player parou de bloquear");
+        }
+    }
+
 }
 
