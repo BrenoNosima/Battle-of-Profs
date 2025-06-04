@@ -12,8 +12,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.attackCooldown = false;
         this.speed = 200; // Slower speed for the enemy
         this.attackRange = 80; // Range to initiate attack
-        this.pursuitRange = 300; // Range to start chasing
-        this.attackDamage = 30;
+        this.pursuitRange = 1000; // Range to start chasing
+        this.attackDamage = 10;
 
         this.setScale(0.7);
         this.setCollideWorldBounds(true);

@@ -12,7 +12,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.attackCooldown = false;
         this.speed = 360;
         this.attackRange = 100;
-        this.attackDamage = 20;
+        this.attackDamage = 10;
 
         this.setScale(0.7);
         this.setCollideWorldBounds(true);
