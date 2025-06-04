@@ -8,11 +8,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        this.health = 100;
+        this.health = 250;
         this.attackCooldown = false;
         this.speed = 360;
         this.attackRange = 100;
-        this.attackDamage = 20;
+        this.attackDamage = 10;
 
         this.setScale(0.7);
         this.setCollideWorldBounds(true);

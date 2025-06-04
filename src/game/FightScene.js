@@ -114,6 +114,53 @@ export default class FightScene extends Phaser.Scene {
     this.vueComponent.updateRoundInfo(this.currentRound, this.playerWins, this.enemyWins);
 
     this.createHealthBars();
+    // Round dots for player and enemy (2 each, below each health bar, no background)
+    const dotRadius = 20;
+    const dotSpacing = 60;
+    const totalDots = 2;
+    const healthBarHeight = 20;
+    const healthBarY = 20;
+    const gap = 60;
+
+    // Player dots: below player health bar
+    const playerDotsY = healthBarY + healthBarHeight + gap;
+    this.playerRoundDots = [];
+    this.playerRoundDotsContainer = this.add.container(this.cameras.main.width * 0.10, playerDotsY).setDepth(11);
+    for (let i = 0; i < totalDots; i++) {
+      const x = -dotSpacing / 2 + i * dotSpacing;
+      const dot = this.add.circle(x, 0, dotRadius, i < this.playerWins ? 0x4CAF50 : 0x888888).setStrokeStyle(2, 0x222222);
+      this.playerRoundDotsContainer.add(dot);
+      this.playerRoundDots.push(dot);
+    }
+
+    // Enemy dots: below enemy health bar
+    const enemyDotsY = healthBarY + healthBarHeight + gap;
+    this.enemyRoundDots = [];
+    this.enemyRoundDotsContainer = this.add.container(this.cameras.main.width * 0.90, enemyDotsY).setDepth(11);
+    for (let i = 0; i < totalDots; i++) {
+      const x = -dotSpacing / 2 + i * dotSpacing;
+      const dot = this.add.circle(x, 0, dotRadius, i < this.enemyWins ? 0xf44336 : 0x888888).setStrokeStyle(2, 0x222222);
+      this.enemyRoundDotsContainer.add(dot);
+      this.enemyRoundDots.push(dot);
+    }
+
+    // Helper to update round dots when round info changes
+    this.updateRoundDots = () => {
+      for (let i = 0; i < totalDots; i++) {
+      this.playerRoundDots[i].setFillStyle(i < this.playerWins ? 0x4CAF50 : 0x888888);
+      this.enemyRoundDots[i].setFillStyle(i < this.enemyWins ? 0xf44336 : 0x888888);
+      }
+    };
+
+    // Patch into Vue updateRoundInfo
+    const originalUpdateRoundInfo = this.vueComponent.updateRoundInfo;
+    this.vueComponent.updateRoundInfo = (currentRound, playerWins, enemyWins) => {
+      originalUpdateRoundInfo.call(this.vueComponent, currentRound, playerWins, enemyWins);
+      this.playerWins = playerWins;
+      this.enemyWins = enemyWins;
+      this.updateRoundDots();
+    };
+    this.updateRoundDots();
   }
 
   createGround() {
@@ -131,6 +178,19 @@ export default class FightScene extends Phaser.Scene {
       this.healthBarsContainer.add(this.playerHealthBar.getGraphics());
       this.healthBarsContainer.add(this.enemyHealthBar.getGraphics());
       this.updateHealthBars();
+
+      const vsText = this.add.text(
+        this.cameras.main.width * 0.5,
+        20 + 10, // 10 é a metade da altura da barra, para centralizar verticalmente
+        'VS',
+        {
+          fontSize: '90px',
+          fill: '#ffffff',
+          stroke: '#000000',
+          strokeThickness: 3,
+          fontStyle: 'bold'
+        }
+      ).setOrigin(0.5).setDepth(10);
   }
 
   updateHealthBars() {
