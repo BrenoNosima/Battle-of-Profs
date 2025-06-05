@@ -146,7 +146,7 @@ onUnmounted(() => {
 /* Estilos para os botões sociais (adaptados do creditos.html) */
 .btn-social {
   display: inline-block;
-  font-family: inherit; /* Usa a fonte global */
+  font-family: 'Press Start 2P', cursive, sans-serif; /* Usa a fonte global */
   font-size: 1rem; /* Ajustado para consistência */
   padding: 12px 28px; /* Ajustado */
   margin-top: 16px;
