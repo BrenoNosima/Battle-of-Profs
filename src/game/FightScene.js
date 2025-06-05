@@ -90,7 +90,23 @@ export default class FightScene extends Phaser.Scene {
 
     this.physics.add.collider(this.player, this.ground);
     this.physics.add.collider(this.enemy, this.ground);
-    this.physics.add.collider(this.player, this.enemy);
+    this.physics.add.collider(
+      this.player,
+      this.enemy,
+      null,
+      (player, enemy) => {
+        const verticalThreshold = 15;
+        // Só permite colisão se não estiverem pulando/caindo um sobre o outro
+        if (player.body.velocity.y >= 0 && player.body.bottom <= enemy.body.top + verticalThreshold) {
+          return false;
+        }
+        if (enemy.body.velocity.y >= 0 && enemy.body.bottom <= player.body.top + verticalThreshold) {
+          return false;
+        }
+        return true;
+      },
+      this
+    );
 
     this.createAnimations();
 
@@ -102,7 +118,8 @@ export default class FightScene extends Phaser.Scene {
       d: Phaser.Input.Keyboard.KeyCodes.D,
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       w: Phaser.Input.Keyboard.KeyCodes.W,
-      shift: Phaser.Input.Keyboard.KeyCodes.SHIFT
+      shift: Phaser.Input.Keyboard.KeyCodes.SHIFT,
+      x: Phaser.Input.Keyboard.KeyCodes.X
     });
 
     this.roundOver = false;
@@ -161,6 +178,7 @@ export default class FightScene extends Phaser.Scene {
       this.updateRoundDots();
     };
     this.updateRoundDots();
+    
   }
 
   createGround() {
