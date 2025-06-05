@@ -4,7 +4,7 @@
   </div>
 </template>
 
-<script>
+<script>//commit pra atualizar
 import Phaser from 'phaser';
 import FightScene from '../game/FightScene.js'; // Corrected path
 
