@@ -71,31 +71,14 @@ const backgroundImageUrl = ref(backgroundPath);
 
 // Função chamada quando o botão "JOGAR" é clicado
 const handlePlayClick = () => {
-  console.log("Botão JOGAR clicado!");
-  isLoading.value = true; // Mostra a barra de carregamento
-  loadingProgress.value = 0; // Reseta o progresso
-
-  // Simula o preenchimento da barra de carregamento
-  // Usamos requestAnimationFrame para uma animação mais suave, mas setTimeout é mais simples aqui
+  isLoading.value = true;
+  loadingProgress.value = 0;
   setTimeout(() => {
-    loadingProgress.value = 100; // Inicia a animação da barra para 100%
-  }, 50); // Pequeno delay para garantir que a barra seja renderizada antes da animação
-
-  // Simula o tempo de carregamento e redireciona
-  // O tempo total deve corresponder à duração da animação da barra (definida no CSS do LoadingBar) + um pouco mais
-  // A transição no LoadingBar.vue foi definida como 0.5s
+    loadingProgress.value = 100;
+  }, 50);
   setTimeout(() => {
-    console.log("Carregamento concluído, redirecionando...");
-    // Redireciona para a URL desejada (ex: tela do jogo)
-    // window.location.href = 'https://www.youtube.com/'; // Redirecionamento real
-    alert("Jogo iniciado! (Simulação - Redirecionaria para o jogo)"); // Simulação
-    // Poderíamos também navegar para uma rota interna do jogo:
-    // router.push('/game');
-
-    // Opcional: Resetar o estado se o usuário voltar para esta tela
-    // isLoading.value = false;
-    // loadingProgress.value = 0;
-  }, 700); // Tempo total (50ms delay + 500ms transição + 150ms margem)
+    router.push('/game'); // <-- Troca para navegação real
+  }, 700);
 };
 
 </script>

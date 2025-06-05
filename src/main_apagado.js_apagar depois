@@ -6,16 +6,24 @@
  */
 
 import { createApp } from 'vue';
-import App from './components/App.vue';
+import App from './App.vue';
+
+
+
+import './index.css'; // Importa o CSS global (incluindo Tailwind)
 
 // Importar estilos globais se necessário
 // import './assets/styles.css';
 
 // Criar e montar a aplicação Vue
 const app = createApp(App);
-
 // Registrar plugins globais se necessário
 // app.use(plugin);
+
+// Usa o roteador na aplicação
+// Isso disponibiliza <router-link> e <router-view> em toda a aplicação
+// e permite a navegação entre as rotas definidas em src/router/index.js
+app.use(router);
 
 // Montar a aplicação no elemento com id 'app'
 app.mount('#app');
