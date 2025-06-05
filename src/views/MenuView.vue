@@ -129,6 +129,7 @@ const handlePlayClick = () => {
   /* transition: background 0.2s, color 0.2s; */ /* Definido nas classes Tailwind */
   color: white;
   /* cursor: pointer; */ /* Definido nas classes Tailwind */
+  font-family: 'Press Start 2P', cursive, sans-serif;
 }
 
 /* O hover é tratado pelas classes hover: do Tailwind */
