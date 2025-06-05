@@ -71,13 +71,14 @@ const backgroundImageUrl = ref(backgroundPath);
 
 // Função chamada quando o botão "JOGAR" é clicado
 const handlePlayClick = () => {
-  isLoading.value = true;
-  loadingProgress.value = 0;
+  
+  // isLoading.value = true;
+  // loadingProgress.value = 0;
+  // setTimeout(() => {
+  //   loadingProgress.value = 100;
+  // }, 50);
   setTimeout(() => {
-    loadingProgress.value = 100;
-  }, 50);
-  setTimeout(() => {
-    router.push('/game'); // <-- Troca para navegação real
+    //router.push('/game'); // <-- Troca para navegação real
   }, 700);
 };
 
