@@ -5,7 +5,7 @@ export default class HealthBar {
         this.scene = scene;
         this.x = x;
         this.y = y;
-        this.width = 700;
+        this.width = 600;
         this.height = 50;
         this.color = color;
         this.bgColor = 0xffffff; // fundo branco
