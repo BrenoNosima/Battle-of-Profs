@@ -74,6 +74,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         } else {
             this.stopBlock();
         }
+
+        if (Phaser.Input.Keyboard.JustDown(keys.x)) {
+            this.dash();
+        }
     }
 
     attack() {
@@ -162,16 +166,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     }
 
-startBlock() {
-    if (!this.isBlocking) {
-        this.isBlocking = true;
-        this.blockSprite.setVisible(true);
-        this.setTint(0x00ffff); // Visual extra
-        this.play('player-block', true); // <-- Troca para animação de bloqueio
-        console.log("Player está bloqueando");
-        // Não reseta attackCooldown aqui para evitar exploits de ataque rápido
+    startBlock() {
+        if (!this.isBlocking) {
+            this.isBlocking = true;
+            this.blockSprite.setVisible(true);
+            this.setTint(0x00ffff); // Visual extra
+            this.play('player-block', true); // <-- Troca para animação de bloqueio
+            console.log("Player está bloqueando");
+            // Não reseta attackCooldown aqui para evitar exploits de ataque rápido
+        }
     }
-}
 
     stopBlock() {
         if (this.isBlocking) {
@@ -182,6 +186,78 @@ startBlock() {
             console.log("Player parou de bloquear");
         }
     }
+    
+    // Função de dash: agora com cooldown de 1000ms e indicador de carregamento na tela
+    dash() {
+        // Se estiver em cooldown, não permite novo dash
+        if (this.dashCooldown) return;
 
+        // Direção do dash: para onde o player está olhando
+        const dashDirection = this.flipX ? -1 : 1;
+        const dashSpeed = 300; // 5x mais rápido que o normal
+        const dashDuration = 1000; // duração do dash em ms
+        const dashCooldownTime = 1000; // cooldown de 1000ms
+
+        // Não altera a gravidade durante o dash (mantém a gravidade normal)
+
+        // Torna o jogador invulnerável durante o dash
+        this.isInvulnerable = true;
+
+        // Animação de dash (opcional)
+        this.play('player-dash', true);
+
+        // Aplica a distância do dash instantaneamente
+        this.x += dashDirection * dashSpeed * (dashDuration / 1000);
+
+        // Efeito visual (opcional)
+        this.setAlpha(0.7);
+
+        // Exibe barra de carregamento na tela
+        if (!this.dashBar) {
+            // Cria a barra uma vez
+            this.dashBarBg = this.scene.add.rectangle(this.x, this.y - 120, 60, 10, 0x222222, 0.7).setDepth(20);
+            this.dashBar = this.scene.add.rectangle(this.x, this.y - 120, 60, 10, 0x00ffff, 1).setDepth(21);
+        }
+        this.dashBarBg.setVisible(true);
+        this.dashBar.setVisible(true);
+        this.dashBar.width = 0;
+        this.dashBar.x = this.x;
+        this.dashBarBg.x = this.x;
+        this.dashBar.y = this.y - 120;
+        this.dashBarBg.y = this.y - 120;
+
+        // Atualiza barra durante o cooldown
+        this.scene.tweens.add({
+            targets: this.dashBar,
+            width: 60,
+            duration: dashCooldownTime,
+            onUpdate: () => {
+                this.dashBar.x = this.x - 30 + this.dashBar.width / 2;
+                this.dashBarBg.x = this.x;
+                this.dashBar.y = this.y - 120;
+                this.dashBarBg.y = this.y - 120;
+            },
+            onComplete: () => {
+                this.dashBar.setVisible(false);
+                this.dashBarBg.setVisible(false);
+            }
+        });
+
+        // Cooldown do dash
+        this.dashCooldown = true;
+        this.scene.time.delayedCall(dashCooldownTime, () => {
+            this.dashCooldown = false;
+        });
+
+        // Mantém a invulnerabilidade durante todo o cooldown do dash
+        this.scene.time.delayedCall(dashCooldownTime, () => {
+            this.isInvulnerable = false;
+            this.setAlpha(1);
+            // Volta para idle se não estiver se movendo
+            if (!this.attackCooldown && !this.scene.keys.a.isDown && !this.scene.keys.d.isDown) {
+                this.play('player-idle', true);
+            }
+        });
+    }
 }
 
