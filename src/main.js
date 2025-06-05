@@ -1,12 +1,11 @@
-import './assets/main.css'
-import './index.css'
+import { createApp } from 'vue';
+import App from './App.vue'; // Corrigido: App.vue está na raiz de src
 
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router/index.js'
+// Importar estilos globais, se necessário (já importados em App.vue)
+// import './assets/main.css';
 
-const app = createApp(App)
-app.use(router)
-app.mount('#app')
+const app = createApp(App);
 
-export default app
+// Montar a aplicação no elemento com id 'app' definido em index.html
+app.mount('#app');
+

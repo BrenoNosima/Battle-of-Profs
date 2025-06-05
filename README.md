@@ -1,69 +1,74 @@
+# Projeto Battle-of-Profs Refatorado em Vue.js Modular
 
-# 🎮 Battle of Profs
+Este é o projeto "Battle-of-Profs" original, refatorado para uma estrutura Vue.js mais modular e organizada, separando a lógica do jogo (Phaser) dos componentes da interface (Vue).
 
-> Um jogo de batalha 1x1 onde o estudante enfrenta professores mestres das artes marciais digitais, rumo à graduação na lendária **Faculdade do Código Supremo**.
+## Estrutura de Pastas
 
-## 📜 Resumo do Enredo
+A nova estrutura do projeto está organizada da seguinte forma:
 
-Em um universo paralelo dentro de uma universidade, os professores se tornaram mestres de linguagens de programação e conceitos tecnológicos. O jogador, um aluno em busca da sabedoria máxima, deve vencer cada professor em batalhas épicas para conquistar seu diploma virtual.
+```
+/Battle-of-Profs-Vue/
+├── public/             # Assets estáticos (imagens, etc.)
+│   ├── backgrounds/
+│   └── sprite/
+├── src/
+│   ├── App.vue           # Componente raiz da aplicação Vue
+│   ├── main.js         # Ponto de entrada da aplicação Vue
+│   ├── assets/           # Assets processados pelo build (CSS, fontes)
+│   ├── components/       # Componentes Vue reutilizáveis
+│   │   └── GameContainer.vue # Wrapper para o canvas do Phaser
+│   └── game/             # Lógica do jogo Phaser
+│       ├── scenes/         # Cenas do Phaser
+│       │   ├── PreloadScene.js
+│       │   └── FightScene.js
+│       ├── config/         # Configurações do Phaser
+│       │   └── phaserConfig.js
+│       ├── core/           # (Vazio por enquanto, pode conter classes Player, Enemy)
+│       ├── utils/          # (Vazio por enquanto, pode conter utilitários)
+│       └── composables/    # (Vazio por enquanto, pode conter Vue Composables)
+├── .eslintrc.cjs       # Configuração do ESLint (se existir no original)
+├── index.html          # Arquivo HTML principal
+├── package.json        # Dependências e scripts do projeto
+├── tsconfig.json       # Configuração do TypeScript
+├── tsconfig.app.json
+├── tsconfig.node.json
+├── vite.config.ts      # Configuração do Vite
+└── README.md           # Este arquivo
+```
 
-## 🧠 Objetivo do Jogador
+**Principais Mudanças:**
 
-* Enfrentar professores em batalhas 1x1.
-* Vencer todas as fases para se formar.
-* Cada fase aumenta em dificuldade e apresenta novos golpes e desafios.
+*   A lógica do Phaser que estava no componente `phaser-vue-ajustado.vue` foi movida para `src/game/scenes/FightScene.js`.
+*   Uma nova cena `src/game/scenes/PreloadScene.js` foi criada para lidar com o carregamento de assets.
+*   A configuração do Phaser está centralizada em `src/game/config/phaserConfig.js`.
+*   O componente `src/components/GameContainer.vue` agora é responsável por inicializar e conter a instância do jogo Phaser.
+*   O `src/App.vue` foi simplificado para apenas renderizar o `GameContainer.vue`.
+*   As pastas `core`, `utils` e `composables` foram criadas para futura expansão e melhor organização, mas ainda não foram populadas extensivamente nesta refatoração inicial.
 
-## ⚔️ Regras Básicas do Jogo
+## Como Executar
 
-* 🎮 Jogo singleplayer.
-* 🧍 O jogador controla um personagem pré-definido.
-* 🤼‍♂️ Batalhas 1x1 contra professores.
-* 🩸 Vence quem zerar primeiro a barra de vida do oponente.
-* ⌨️ Controles via teclado (setas para movimento, teclas para ataque e defesa).
-* ✨ Cada personagem possui golpes especiais.
-* 🏁 O jogo termina após vencer todos os professores.
+1.  **Descompacte** o arquivo `Battle-of-Profs-Vue.zip`.
+2.  **Navegue** até o diretório `Battle-of-Profs-Vue` no seu terminal:
+    ```bash
+    cd Battle-of-Profs-Vue
+    ```
+3.  **Instale as dependências** (certifique-se de ter Node.js e npm/yarn instalados):
+    ```bash
+    npm install
+    # ou
+    # yarn install
+    ```
+4.  **Execute o servidor de desenvolvimento**:
+    ```bash
+    npm run dev
+    # ou
+    # yarn dev
+    ```
+5.  Abra o navegador no endereço fornecido (geralmente `http://localhost:5173`).
 
-## 🧑‍💻 Equipe de Desenvolvimento
+## Observações
 
-| Integrantes                | 
-| -------------------------- | 
-| Breno Bertaglia Nosima     |                            
-| Carlos Eduardo Carfi Silva |                            
-| Felipe Galeti Gôngora      |                           
-| Henrique Kendi Ikeda       |                            
-| Leonardo Bezerra da Silva  |                            
-| Thiago Gimenes Santos      |                            
-
-> ⚠️ *A distribuição específica de tarefas será definida conforme a evolução do projeto.*
-
-## 🖼️ Wireframes & Esboços
-
-* **Tela Inicial:** Menu com seleção de fases e opções básicas.
-* **Batalha:** Arena com barra de vida, golpes e HUD.
-* **Personagens:** Visual “pixelado” com características marcantes de cada professor.
-* **Fundo do jogo:** Em processo de definição.
-
-## 🧰 Stack Tecnológica
-
-* **Vue.js** – Framework principal para estrutura do jogo.
-* **JavaScript** – Lógica de jogo e interações.
-* **HTML5 & CSS3** – Estrutura base e estilização.
-* **Figma / Canva** – Prototipagem e wireframes.
-* **Git & GitHub** – Versionamento e colaboração.
-* *(Outras tecnologias a serem definidas)*
-
-## 🚧 Status do Projeto
-
-> ✅ **Em desenvolvimento**
-> 🔜 Etapas futuras incluem:
->
-> * Animações e colisões
-> * IA básica para os professores
-> * Implementação das fases e progressão
-
-## 📌 Licença
-
-Este projeto é de uso educacional. Licença a definir.
-
-
+*   Esta refatoração focou na separação estrutural da lógica do Phaser e Vue. O código dentro das cenas do Phaser (`FightScene.js`) ainda pode ser otimizado e dividido em mais arquivos (como `Player.js`, `Enemy.js`, `uiElements.js`, `particles.js`) para maior clareza e reutilização, conforme sugerido na estrutura de pastas.
+*   A validação completa do funcionamento pode exigir ajustes finos nos caminhos de importação ou na lógica de comunicação entre Vue e Phaser, dependendo do ambiente de execução.
+*   O arquivo `eslint.config.ts` não foi encontrado no projeto original e, portanto, não foi copiado.
 
