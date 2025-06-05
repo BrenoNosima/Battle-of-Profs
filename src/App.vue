@@ -1,17 +1,10 @@
 <template>
-  <div id="app">
-    <PhaserVueMinimo />
-  </div>
+  <router-view />
 </template>
 
 <script>
-import PhaserVueMinimo from './components/GameContainer.vue'
-
 export default {
-  name: 'App',
-  components: {
-    PhaserVueMinimo
-  }
+  name: 'App'
 }
 </script>
 
