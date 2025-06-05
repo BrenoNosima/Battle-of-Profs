@@ -34,13 +34,15 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+  position: relative;
   min-height: 100vh;
+  overflow: hidden;
 }
 
 /* Pseudo-elemento para adicionar uma sobreposição escura sobre a imagem de fundo */
 .bg-pattern::before {
   content: "";
-  position: fixed; /* Ou absolute, dependendo do contexto */
+  position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.3);
   z-index: 0; /* Garante que fique atrás do conteúdo */
