@@ -161,8 +161,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     jump() {
         if (this.body.onFloor()) {
-            this.setVelocityY(-600); // Adjust jump height as needed
+            this.setVelocityY(-900); // Ajustar altura do salto
             console.log("Enemy: Saltando");
+            this.setGravityY(2000); // Aumenta a gravidade para cair mais rápido
         }
     }
 }

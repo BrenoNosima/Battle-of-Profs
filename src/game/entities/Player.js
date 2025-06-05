@@ -59,8 +59,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Pulo com W
         if (keys.w.isDown && this.body.onFloor()) {
-            this.setVelocityY(-500); // Ajustar altura do pulo
+            this.setVelocityY(-900); // Ajustar altura do pulo
             console.log("Player: Pulando");
+            this.setGravityY(2000); // Aumenta a gravidade para cair mais rápido
         }
 
         // Ataque com espaço
@@ -76,7 +77,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     attack() {
-        if (this.attackCooldown || this.scene.roundOver) return;
+        if (this.attackCooldown || this.scene.roundOver || this.isBlocking) return;
 
         console.log("Player: Atacando");
         this.attackCooldown = true;
@@ -161,13 +162,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     }
 
-    startBlock() {
+startBlock() {
     if (!this.isBlocking) {
         this.isBlocking = true;
         this.blockSprite.setVisible(true);
         this.setTint(0x00ffff); // Visual extra
         this.play('player-block', true); // <-- Troca para animação de bloqueio
         console.log("Player está bloqueando");
+        // Não reseta attackCooldown aqui para evitar exploits de ataque rápido
     }
 }
 
