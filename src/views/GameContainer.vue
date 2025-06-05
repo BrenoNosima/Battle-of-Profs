@@ -29,7 +29,7 @@ export default {
     this.resizeGame();
   },
 
-  beforeDestroy() {
+  beforeUnmount() {  //Garante que o Phaser seja destruído ao sair da rota do jogo
     if (this.game) {
       this.game.destroy(true);
       this.game = null;
