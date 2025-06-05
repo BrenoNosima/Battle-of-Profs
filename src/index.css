@@ -1,0 +1,80 @@
+/* src/index.css */
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
+/* Importa a fonte customizada 'Press Start 2P' do Google Fonts. */
+/* Esta linha garante que a fonte esteja disponível para uso no projeto. */
+/* Importa as diretivas base, de componentes e utilitários do Tailwind CSS. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Estilos globais que se aplicam a todo o corpo da página. */
+body {
+  /* Define a fonte padrão para a aplicação usando a classe definida no tailwind.config.js */
+  /* A sintaxe theme() permite acessar valores do tema Tailwind. */
+  font-family: theme("fontFamily.press-start");
+  /* Cor de fundo padrão */
+  background-color: #9e7640;
+  /* Cor do texto padrão */
+  color: white;
+  /* Remove margens e paddings padrão do navegador */
+  margin: 0;
+  padding: 0;
+  /* Garante que o corpo ocupe pelo menos a altura total da tela */
+  min-height: 100vh;
+}
+
+.bg-pattern {
+  /* Define a imagem de fundo, centralizada e cobrindo a área */
+  /* Nota: O caminho da imagem precisa ser ajustado para funcionar com o Vite/Vue. */
+  /* Idealmente, a imagem seria referenciada dinamicamente no componente. */
+  /* Este estilo global pode ser menos flexível. */
+  /* background: url("@/assets/img/ChatGPT Image 15 de mai. de 2025, 10_05_41.png") no-repeat center center fixed; */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Pseudo-elemento para adicionar uma sobreposição escura sobre a imagem de fundo */
+.bg-pattern::before {
+  content: "";
+  position: fixed; /* Ou absolute, dependendo do contexto */
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 0; /* Garante que fique atrás do conteúdo */
+  pointer-events: none; /* Permite cliques através da sobreposição */
+}
+
+/* Garante que o conteúdo principal fique acima da sobreposição */
+#app > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Estilos específicos que podem ser difíceis de replicar apenas com Tailwind */
+/* Ou estilos que queremos manter globais */
+
+/* Exemplo: Borda pixelada (pode ser um componente ou classe utilitária também) */
+.pixel-border {
+  border: 4px solid white;
+  box-shadow: 0 0 0 4px black;
+}
+
+/* Estilos para scroll snap na página de créditos */
+.credits-scroll-container {
+    scroll-snap-type: y mandatory;
+    overflow-y: scroll;
+    height: 100vh; /* Precisa de altura definida para o scroll snap funcionar */
+}
+
+.credits-section {
+    scroll-snap-align: start;
+    height: 100vh; /* Cada seção ocupa a altura total */
+    display: flex;
+    align-items: stretch; /* Faz os filhos esticarem */
+}
+
+/* Adicione outros estilos globais ou ajustes necessários aqui */
+
