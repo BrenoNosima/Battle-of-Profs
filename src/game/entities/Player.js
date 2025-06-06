@@ -10,7 +10,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.health = 250;
         this.attackCooldown = false;
-        this.speed = 360;
+        this.speed = 400;
         this.attackRange = 100;
         this.attackDamage = 10;
 
@@ -167,13 +167,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     startBlock() {
+        if (this.blockCooldown) {
+            console.log("Bloqueio em cooldown!");
+            return;
+        }
         if (!this.isBlocking) {
             this.isBlocking = true;
             this.blockSprite.setVisible(true);
             this.setTint(0x00ffff); // Visual extra
-            this.play('player-block', true); // <-- Troca para animação de bloqueio
+            this.play('player-block', true);
             console.log("Player está bloqueando");
-            // Não reseta attackCooldown aqui para evitar exploits de ataque rápido
         }
     }
 
@@ -182,8 +185,46 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.isBlocking = false;
             this.blockSprite.setVisible(false);
             this.clearTint();
-            this.play('player-idle', true); // <-- Volta para idle
+            this.play('player-idle', true);
             console.log("Player parou de bloquear");
+
+            // Inicia cooldown de bloqueio
+            this.blockCooldown = true;
+
+            // Cria barra de cooldown se não existir
+            if (!this.blockBar) {
+                this.blockBarBg = this.scene.add.rectangle(this.x, this.y - 140, 60, 10, 0x222222, 0.7).setDepth(20);
+                this.blockBar = this.scene.add.rectangle(this.x, this.y - 140, 60, 10, 0x00ff00, 1).setDepth(21);
+            }
+            this.blockBarBg.setVisible(true);
+            this.blockBar.setVisible(true);
+            this.blockBar.width = 0;
+            this.blockBar.x = this.x;
+            this.blockBarBg.x = this.x;
+            this.blockBar.y = this.y - 140;
+            this.blockBarBg.y = this.y - 140;
+
+            // Tween para animar a barra durante o cooldown
+            this.scene.tweens.add({
+                targets: this.blockBar,
+                width: 60,
+                duration: 500,
+                onUpdate: () => {
+                    this.blockBar.x = this.x - 30 + this.blockBar.width / 2;
+                    this.blockBarBg.x = this.x;
+                    this.blockBar.y = this.y - 140;
+                    this.blockBarBg.y = this.y - 140;
+                },
+                onComplete: () => {
+                    this.blockBar.setVisible(false);
+                    this.blockBarBg.setVisible(false);
+                }
+            });
+
+            this.scene.time.delayedCall(500, () => {
+                this.blockCooldown = false;
+                console.log("Cooldown de bloqueio finalizado");
+            });
         }
     }
     
