@@ -66,7 +66,7 @@ const profiles = ref([
     id: 5,
     // Corrigindo o nome conforme o comentário no HTML original (Zica -> Bezerra?)
     // Mantendo "Zica" por enquanto, conforme o código original.
-    name: "Leonardo\nZica", 
+    name: "Leonardo\nSilva", 
     imageName: "leo.jpeg",
     githubUrl: "https://github.com/H4ttiz",
     linkedinUrl: "https://www.linkedin.com/in/leonardo-bezerra-da-silva-2507a92bb/",
