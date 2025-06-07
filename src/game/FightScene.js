@@ -245,14 +245,14 @@ export default class FightScene extends Phaser.Scene {
 
   damagePlayer(amount) {
     if (this.roundOver || !this.player) return;
-    this.player.takeDamage(amount);
+    this.player.takeDamage(amount);// essa função takeDaage vem do player.js
     this.updateHealthBars();
     console.log(`FightScene: Player damaged, health: ${this.player.health}`);
   }
 
   damageEnemy(amount) {
     if (this.roundOver || !this.enemy) return;
-    this.enemy.takeDamage(amount);
+    this.enemy.takeDamage(amount); // essa função takeDaage vem do player.js
     this.updateHealthBars();
     console.log(`FightScene: Enemy damaged, health: ${this.enemy.health}`);
   }
