@@ -8,9 +8,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        this.health = 300;
+        this.health = 350;
         this.attackCooldown = false;
-        this.speed = 200; // Slower speed for the enemy
+        this.speed = 450; // Slower speed for the enemy
         this.attackRange = 80; // Range to initiate attack
         this.pursuitRange = 1000; // Range to start chasing
         this.attackDamage = 10;
@@ -18,8 +18,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.setScale(0.7);
         this.setCollideWorldBounds(true);
         this.setBounce(0.1);
-        this.setSize(100, 200); // Adjust hitbox
-        this.setOffset(70, 80); // Adjust offset
+        this.setSize(60, 200); // Adjust hitbox
+        this.setOffset(70, 10); // Adjust offset
         this.setTint(0x00ffff); // Distinguishing color
 
         console.log("Enemy: Entidade criada");
@@ -76,6 +76,9 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
              if (this.anims.currentAnim?.key !== 'enemy-idle') {
                  this.play('enemy-idle', true);
             }
+        }
+        if (!this.body.onFloor() && this.anims.currentAnim?.key !== 'enemy-jump') {
+            this.play('enemy-jump', true);
         }
     }
 

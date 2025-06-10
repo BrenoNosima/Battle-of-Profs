@@ -14,11 +14,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.attackRange = 100;
         this.attackDamage = 10;
 
-        this.setScale(0.7);
+        this.setScale(0.9);
         this.setCollideWorldBounds(true);
         this.setBounce(0.1);
-        this.setSize(100, 200); // Ajustar hitbox
-        this.setOffset(70, 80); // Ajustar offset da hitbox se necessário
+        this.setSize(60, 200); // Ajustar hitbox
+        this.setOffset(70, 10); // Ajustar offset da hitbox se necessário
 
         console.log("Player: Entidade criada");
 
@@ -31,8 +31,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     update(keys) {
         // Resetar velocidade horizontal (manter vertical para gravidade)
-        this.setVelocityX(0); //Zera a velocidade horizontal do jogador a cada frame. Isso significa que, se nenhuma tecla de movimento estiver pressionada, o jogador para de se mover para os lados.
-        this.blockSprite.setPosition(this.x, this.y); // permite que o escudo acompanhe o jogador
+        this.setVelocityX(0);
+        this.blockSprite.setPosition(this.x, this.y);
 
 
         // Movimento com A e D
@@ -58,10 +58,20 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         // Pulo com W
-        if (keys.w.isDown && this.body.onFloor()) { // só permite o pulo se for clicado o w e se o boneco estiver no chão
-            this.setVelocityY(-900); // Ajustar altura do pulo
-            console.log("Player: Pulando");
-            this.setGravityY(2000); // Aumenta a gravidade para cair mais rápido
+        if (keys.w.isDown && this.body.onFloor()) {
+            this.setVelocityY(-1100);
+            this.play('player-jump', true);
+            this.setGravityY(2000);
+        }
+
+        // Se estiver no ar, garante que está na animação de pulo
+        if (!this.body.onFloor() && this.anims.currentAnim?.key !== 'player-jump') {
+            this.play('player-jump', true);
+        }
+
+        // Volta para idle ao aterrissar
+        if (this.body.onFloor() && this.anims.currentAnim?.key === 'player-jump') {
+            this.play('player-idle', true);
         }
 
         // Ataque com espaço
@@ -69,16 +79,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.attack();
         }
 
-        // bloqueio com shift
-         if (keys.shift.isDown) { // se clicar ativa o escudo
-        this.startBlock();
-        } else {
-            this.stopBlock(); // se soltar desativa o escudo
-        }
-
-        //dash com X
-        if (Phaser.Input.Keyboard.JustDown(keys.x)) {
-            this.dash();
+       // BLOQUEIO COM SHIFT
+        if (keys.shift.isDown && !this.blockCooldown) {
+            this.startBlock();
+            return;
+        } else if (this.isBlocking && !keys.shift.isDown) {
+            this.stopBlock();
+            // Deixa seguir para idle ou outras animações
+        } else if (this.isBlocking) {
+            // Se ainda está bloqueando (ex: cooldown), não faz mais nada
+            return;
         }
     }
 
@@ -160,18 +170,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     startBlock() {  // metodo que ativa a defesa do jogador
-        if (this.blockCooldown) {
-            console.log("Bloqueio em cooldown!");
-            return;
+        if (this.blockCooldown) return;
+        this.isBlocking = true;
+        this.blockSprite.setVisible(true);
+        this.setTint(0x00ffff);
+        this.play('player-block', true); // Sempre força a animação de defesa
         }
-        if (!this.isBlocking) {
-            this.isBlocking = true;
-            this.blockSprite.setVisible(true);
-            this.setTint(0x00ffff); // Visual extra
-            this.play('player-block', true);
-            console.log("Player está bloqueando");
-        }
-    }
 
     stopBlock() {
         if (this.isBlocking) {
@@ -179,7 +183,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.blockSprite.setVisible(false);
             this.clearTint();
             this.play('player-idle', true);
-            console.log("Player parou de bloquear");
 
             // Inicia cooldown de bloqueio
             this.blockCooldown = true;
@@ -216,7 +219,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
             this.scene.time.delayedCall(500, () => {
                 this.blockCooldown = false;
-                console.log("Cooldown de bloqueio finalizado");
+                // Se o jogador ainda estiver segurando SHIFT, volta a bloquear automaticamente
+                if (this.scene.keys.shift.isDown) {
+                    this.startBlock();
+                }
             });
         }
     }
@@ -294,4 +300,3 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         });
     }
 }
-
