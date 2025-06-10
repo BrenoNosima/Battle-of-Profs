@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Player from './entities/Player.js'; // Relative path from src/game/
 import Enemy from './entities/Enemy.js';   // Relative path from src/game/
 import HealthBar from './ui/HealthBar.js'; // Relative path from src/game/
+import RoundTransition from './transitions/RoundTransition.js'; // Importação da classe de transição
 
 // Classe de cena personalizada
 export default class FightScene extends Phaser.Scene {
@@ -24,6 +25,12 @@ export default class FightScene extends Phaser.Scene {
     this.totalRounds = 3;
     this.playerWins = 0;
     this.enemyWins = 0;
+    
+    // Objeto de transição
+    this.roundTransition = null;
+    
+    // Flag para controlar se já mostrou os controles
+    this.controlsShown = false;
   }
 
   // Receive data when the scene starts
@@ -54,7 +61,8 @@ export default class FightScene extends Phaser.Scene {
 
     try {
       this.load.image('background', '/backgrounds/menu.png'); // Assuming served from public root
-      console.log('FightScene: Tentando carregar background');
+      this.load.image('background2', '/backgrounds/cenario2.png'); // Segundo cenário para transição
+      console.log('FightScene: Tentando carregar backgrounds');
     } catch (e) {
       console.log('FightScene: Background não encontrado, usando cor padrão');
     }
@@ -62,7 +70,7 @@ export default class FightScene extends Phaser.Scene {
     this.load.image('platform', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAUCAYAAAB7wJiVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAnSURBVHgB7cxBDQAADMOwkb/RpYfYgQT2tgEAAAAAAAAAAADwwAB9pgABKZ/t3QAAAABJRU5ErkJggg==');
   }
 
-  create() {
+  async create() {
      // Check if vueComponent reference was received
     if (!this.vueComponent) {
         console.error("FightScene: create() chamado sem referência do vueComponent!");
@@ -184,6 +192,20 @@ export default class FightScene extends Phaser.Scene {
     };
     this.updateRoundDots();
     
+    // Inicializa o objeto de transição
+    this.roundTransition = new RoundTransition(this);
+    
+    // Mostra a tela de controles antes de iniciar o jogo
+    // Apenas no primeiro round ou se ainda não tiver mostrado
+    if (this.currentRound === 1 && !this.controlsShown) {
+      this.roundOver = true; // Impede o jogo de começar enquanto mostra os controles
+      await this.roundTransition.showControlsScreen(5000);
+      this.roundOver = false; // Libera o jogo para começar
+      this.controlsShown = true; // Marca que já mostrou os controles
+      
+      // Mostra uma mensagem de "Fight!" após os controles
+      await this.roundTransition.show('FIGHT!', 1000);
+    }
   }
 
   createGround() {
@@ -266,7 +288,7 @@ export default class FightScene extends Phaser.Scene {
     console.log(`FightScene: Enemy damaged, health: ${this.enemy.health}`);
   }
 
-  checkRoundEnd() {
+  async checkRoundEnd() {
     if (this.roundOver || !this.player || !this.enemy) return;
 
     let roundWinner = null;
@@ -292,82 +314,58 @@ export default class FightScene extends Phaser.Scene {
         this.vueComponent.updateRoundInfo(this.currentRound, this.playerWins, this.enemyWins);
       }
 
+      // Usa a classe RoundTransition para mostrar mensagem de fim de round
       if (roundWinner === 'player') {
-        this.showGameMessage('Você venceu o Round!');
+        await this.roundTransition.show('Você venceu o Round!');
       } else {
-        this.showGameMessage('Você perdeu o Round!');
+        await this.roundTransition.show('Você perdeu o Round!');
       }
 
-      const playerHasMajority = this.playerWins > this.totalRounds / 2;
-      const enemyHasMajority = this.enemyWins > this.totalRounds / 2;
+      const playerHasMajority = this.playerWins >= 2; // Ganhou 2 rounds
+      const enemyHasMajority = this.enemyWins >= 2;   // Perdeu 2 rounds
       const isLastRound = this.currentRound >= this.totalRounds;
 
       if (isLastRound || playerHasMajority || enemyHasMajority) {
-        let finalMessage = '';
-        if (this.playerWins > this.enemyWins) {
-          finalMessage = 'Vitória!';
-        } else if (this.enemyWins > this.playerWins) {
-          finalMessage = 'Game Over';
+        // Determina o resultado final
+        if (playerHasMajority) {
+          // Jogador ganhou 2 rounds - transição para novo cenário
+          await this.roundTransition.transitionToNewScene('background2');
+        } else if (enemyHasMajority) {
+          // Jogador perdeu 2 rounds - mostra tela de jogar novamente
+          await this.roundTransition.showGameOverScreen();
         } else {
-          finalMessage = 'Empate Final!';
-        }
-        this.showGameMessage(finalMessage, true);
-
-        const restartText = this.add.text(
-          this.cameras.main.width / 2,
-          this.cameras.main.height / 2 + 60,
-          'Pressione ESPAÇO para reiniciar',
-          { fontSize: '24px', fill: '#fff', stroke: '#000', strokeThickness: 2 }
-        ).setOrigin(0.5).setDepth(10);
-
-        this.input.keyboard.once('keydown-SPACE', () => {
-          if (this.vueComponent) {
-            this.vueComponent.restartGame();
+          // Caso de empate ou outro resultado
+          let finalMessage = '';
+          if (this.playerWins > this.enemyWins) {
+            finalMessage = 'Vitória!';
+          } else if (this.enemyWins > this.playerWins) {
+            finalMessage = 'Game Over';
+          } else {
+            finalMessage = 'Empate Final!';
           }
-        });
+          await this.roundTransition.show(finalMessage, 3000);
 
+          const restartText = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 + 60,
+            'Pressione ESPAÇO para reiniciar',
+            { fontSize: '24px', fill: '#fff', stroke: '#000', strokeThickness: 2 }
+          ).setOrigin(0.5).setDepth(10);
+
+          this.input.keyboard.once('keydown-SPACE', () => {
+            if (this.vueComponent) {
+              this.vueComponent.restartGame();
+            }
+          });
+        }
       } else {
-        this.time.delayedCall(2000, () => {
-          this.currentRound++;
-          // Restart the scene, Phaser will call init() again with the data
-          this.scene.restart({ vueComponentRef: this.vueComponent }); 
-        });
+        // Próximo round
+        this.currentRound++;
+        await this.roundTransition.show(`Próximo Round: ${this.currentRound}`);
+        // Restart the scene, Phaser will call init() again with the data
+        this.scene.restart({ vueComponentRef: this.vueComponent }); 
       }
     }
-  }
-
-  showGameMessage(message, isFinal = false) {
-    const textStyle = {
-      fontSize: isFinal ? '48px' : '32px',
-      fill: '#fff',
-      stroke: '#000',
-      strokeThickness: 4,
-      align: 'center'
-    };
-
-    const messageText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      message,
-      textStyle
-    ).setOrigin(0.5).setDepth(10);
-
-    this.tweens.add({
-      targets: messageText,
-      scale: 1.2,
-      duration: 200,
-      yoyo: true,
-      repeat: 1,
-      onComplete: () => {
-         if (!isFinal) {
-            this.time.delayedCall(1500, () => {
-              if (messageText.active) {
-                 messageText.destroy();
-              }
-            });
-          }
-      }
-    });
   }
 
   handleResize(width, height) {
@@ -393,7 +391,8 @@ export default class FightScene extends Phaser.Scene {
       }
 
       // Reposition background
-      const bg = this.children.list.find(child => child.texture && child.texture.key === 'background');
+      const bg = this.children.list.find(child => child.texture && 
+        (child.texture.key === 'background' || child.texture.key === 'background2'));
       if (bg) {
           bg.setPosition(width / 2, height / 2);
           const scaleX = width / bg.width;
@@ -401,9 +400,5 @@ export default class FightScene extends Phaser.Scene {
           const scale = Math.max(scaleX, scaleY);
           bg.setScale(scale);
       }
-      
-      // Reposition entities if needed (optional, depends on game design)
-      // if (this.player) this.player.x = width * 0.3;
-      // if (this.enemy) this.enemy.x = width * 0.7;
   }
 }
