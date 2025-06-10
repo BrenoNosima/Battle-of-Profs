@@ -10,15 +10,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.health = 250;
         this.attackCooldown = false;
-        this.speed = 360;
+        this.speed = 400;
         this.attackRange = 100;
         this.attackDamage = 10;
 
-        this.setScale(0.7);
+        this.setScale(0.9);
         this.setCollideWorldBounds(true);
         this.setBounce(0.1);
-        this.setSize(100, 200); // Ajustar hitbox
-        this.setOffset(70, 80); // Ajustar offset da hitbox se necessário
+        this.setSize(60, 200); // Ajustar hitbox
+        this.setOffset(70, 10); // Ajustar offset da hitbox se necessário
 
         console.log("Player: Entidade criada");
 
@@ -37,19 +37,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Movimento com A e D
         if (keys.a.isDown) {
-            this.setVelocityX(-this.speed);
+            this.setVelocityX(-this.speed); //move o jogador para esquerda(velocidade negativa)
             this.flipX = true; // Virar para a esquerda
-            if (!this.anims.isPlaying || this.anims.currentAnim.key !== 'player-walk') {
+            if (!this.anims.isPlaying || this.anims.currentAnim.key !== 'player-walk') { // nesse caso se nao esiver atacando, ou trocando de animação faz a troca de sprite de andar
                  if (!this.attackCooldown) this.play('player-walk', true);
             }
         } else if (keys.d.isDown) {
-            this.setVelocityX(this.speed);
+            this.setVelocityX(this.speed); // move o jogador para direita(velocidade positiva)
             this.flipX = false; // Virar para a direita
-             if (!this.anims.isPlaying || this.anims.currentAnim.key !== 'player-walk') {
+             if (!this.anims.isPlaying || this.anims.currentAnim.key !== 'player-walk') { // se nesse caso não estiver atacando, ou trocando de animação faz a troca de sprite de andar
                  if (!this.attackCooldown) this.play('player-walk', true);
             }
         } else {
-            // Se não estiver se movendo nem atacando, voltar para idle
+            // Se não estiver se movendo nem atacando, voltar para idle(sprite parado)
             if (!this.attackCooldown && (!this.anims.isPlaying || this.anims.currentAnim.key !== 'player-idle')) {
                  if (this.anims.currentAnim?.key !== 'player-attack') { // Evitar interromper ataque
                     this.play('player-idle', true);
@@ -59,24 +59,36 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Pulo com W
         if (keys.w.isDown && this.body.onFloor()) {
-            this.setVelocityY(-900); // Ajustar altura do pulo
-            console.log("Player: Pulando");
-            this.setGravityY(2000); // Aumenta a gravidade para cair mais rápido
+            this.setVelocityY(-1100);
+            this.play('player-jump', true);
+            this.setGravityY(2000);
+        }
+
+        // Se estiver no ar, garante que está na animação de pulo
+        if (!this.body.onFloor() && this.anims.currentAnim?.key !== 'player-jump') {
+            this.play('player-jump', true);
+        }
+
+        // Volta para idle ao aterrissar
+        if (this.body.onFloor() && this.anims.currentAnim?.key === 'player-jump') {
+            this.play('player-idle', true);
         }
 
         // Ataque com espaço
-        if (Phaser.Input.Keyboard.JustDown(keys.space) && !this.attackCooldown) {
+        if (Phaser.Input.Keyboard.JustDown(keys.space) && !this.attackCooldown) { // só vai ocorrer se for clicado espaço e se nao estiver em cooldown
             this.attack();
         }
 
-         if (keys.shift.isDown) {
-        this.startBlock();
-        } else {
+       // BLOQUEIO COM SHIFT
+        if (keys.shift.isDown && !this.blockCooldown) {
+            this.startBlock();
+            return;
+        } else if (this.isBlocking && !keys.shift.isDown) {
             this.stopBlock();
-        }
-
-        if (Phaser.Input.Keyboard.JustDown(keys.x)) {
-            this.dash();
+            // Deixa seguir para idle ou outras animações
+        } else if (this.isBlocking) {
+            // Se ainda está bloqueando (ex: cooldown), não faz mais nada
+            return;
         }
     }
 
@@ -97,25 +109,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             // Chamar método da cena para causar dano e empurrar
             this.scene.damageEnemy(this.attackDamage);
 
-            // Empurrar o inimigo (a cena pode lidar com isso ou a entidade)
+            // Empurrar o inimigo (a cena pode lidar com isso ou a entidade)   EM POUCAS PALAVRAS E A REAÇÃO DO BONECO AO LEVAR O SOCO
             const angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
             enemy.setVelocity(
-                Math.cos(angle) * 300,
+                Math.cos(angle) * 300, 
                 Math.sin(angle) * 150 - 100 // Adicionar um leve impulso para cima
             );
         }
 
         // Criar efeito visual de ataque (pode ser um método separado)
         this.createAttackEffect();
-
-        // Terminar ataque após animação e cooldown
-        this.scene.time.delayedCall(300, () => { // Duração da animação/ataque
-             // Voltar para idle se não estiver se movendo
-             // A verificação já existe no update, mas podemos forçar aqui se necessário
-             // if (!this.scene.keys.a.isDown && !this.scene.keys.d.isDown) {
-             //    this.play('player-idle', true);
-             // }
-        });
 
         this.scene.time.delayedCall(800, () => { // Cooldown total
             this.attackCooldown = false;
@@ -124,14 +127,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     createAttackEffect() {
-        const attackDirection = this.flipX ? -1 : 1;
+        const attackDirection = this.flipX ? -1 : 1;// basicamente ve para onde o personagem está apontado e solta na direção
         const effectX = this.x + (attackDirection * 60); // Ajustar posição do efeito
         const effectY = this.y - 30; // Ajustar altura do efeito
 
-        const attackEffect = this.scene.add.circle(effectX, effectY, 15, 0xffff00, 0.7);
+        const attackEffect = this.scene.add.circle(effectX, effectY, 15, 0xffff00, 0.7);//aquela animação de bolinha quando bate
         attackEffect.setDepth(5); // Garantir que fique visível
 
-        this.scene.tweens.add({
+        this.scene.tweens.add({ // aqui basicamente é animação do efeito criado 
             targets: attackEffect,
             scale: { from: 0.5, to: 2.5 },
             alpha: { from: 0.8, to: 0 },
@@ -143,7 +146,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         });
     }
 
-    takeDamage(amount) {
+    takeDamage(amount) { // é chamada lá no FightScene.js
 
          if (this.isBlocking) {
             console.log("Ataque bloqueado! Sem dano recebido.");
@@ -166,24 +169,61 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     }
 
-    startBlock() {
-        if (!this.isBlocking) {
-            this.isBlocking = true;
-            this.blockSprite.setVisible(true);
-            this.setTint(0x00ffff); // Visual extra
-            this.play('player-block', true); // <-- Troca para animação de bloqueio
-            console.log("Player está bloqueando");
-            // Não reseta attackCooldown aqui para evitar exploits de ataque rápido
+    startBlock() {  // metodo que ativa a defesa do jogador
+        if (this.blockCooldown) return;
+        this.isBlocking = true;
+        this.blockSprite.setVisible(true);
+        this.setTint(0x00ffff);
+        this.play('player-block', true); // Sempre força a animação de defesa
         }
-    }
 
     stopBlock() {
         if (this.isBlocking) {
             this.isBlocking = false;
             this.blockSprite.setVisible(false);
             this.clearTint();
-            this.play('player-idle', true); // <-- Volta para idle
-            console.log("Player parou de bloquear");
+            this.play('player-idle', true);
+
+            // Inicia cooldown de bloqueio
+            this.blockCooldown = true;
+
+            // Cria barra de cooldown se não existir
+            if (!this.blockBar) {
+                this.blockBarBg = this.scene.add.rectangle(this.x, this.y - 140, 60, 10, 0x222222, 0.7).setDepth(20);
+                this.blockBar = this.scene.add.rectangle(this.x, this.y - 140, 60, 10, 0x00ff00, 1).setDepth(21);
+            }
+            this.blockBarBg.setVisible(true);
+            this.blockBar.setVisible(true);
+            this.blockBar.width = 0;
+            this.blockBar.x = this.x;
+            this.blockBarBg.x = this.x;
+            this.blockBar.y = this.y - 140;
+            this.blockBarBg.y = this.y - 140;
+
+            // Tween para animar a barra durante o cooldown
+            this.scene.tweens.add({
+                targets: this.blockBar,
+                width: 60,
+                duration: 500,
+                onUpdate: () => {
+                    this.blockBar.x = this.x - 30 + this.blockBar.width / 2;
+                    this.blockBarBg.x = this.x;
+                    this.blockBar.y = this.y - 140;
+                    this.blockBarBg.y = this.y - 140;
+                },
+                onComplete: () => {
+                    this.blockBar.setVisible(false);
+                    this.blockBarBg.setVisible(false);
+                }
+            });
+
+            this.scene.time.delayedCall(500, () => {
+                this.blockCooldown = false;
+                // Se o jogador ainda estiver segurando SHIFT, volta a bloquear automaticamente
+                if (this.scene.keys.shift.isDown) {
+                    this.startBlock();
+                }
+            });
         }
     }
     
@@ -260,4 +300,3 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         });
     }
 }
-

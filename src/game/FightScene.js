@@ -43,9 +43,14 @@ export default class FightScene extends Phaser.Scene {
 
   preload() {
     console.log('FightScene: Preload iniciado');
-    this.load.spritesheet('player', '/sprite/sprite.png', { frameWidth: 235, frameHeight: 350 }); // Assuming served from public root
-    this.load.spritesheet('enemy', '/sprite/sprite.png', { frameWidth: 235, frameHeight: 350 }); // Assuming served from public root
-    this.load.spritesheet('player', 'sprite/moreno_escudo.png', { frameWidth: 240, frameHeight: 320 });
+    this.load.spritesheet('brenoAndando', '/sprite/breno/brenoAndando.png', { frameWidth: 90, frameHeight: 350 }); // Assuming served from public root
+    this.load.spritesheet('brenoAtaque', 'sprite/breno/brenoAtacando.png', { frameWidth: 89.9, frameHeight: 350 });
+    this.load.spritesheet('brenoDefendendo', '/sprite/breno/BrenoDefendendo.png', { frameWidth: 138, frameHeight: 350 }); // Assuming served from public root
+    this.load.spritesheet('brenoPulando', 'sprite/breno/brenoPulando.png', { frameWidth: 200, frameHeight: 350 });
+
+    this.load.spritesheet('morenoAtaque', '/sprite/Moreno/morenoAtaque.png', { frameWidth: 130, frameHeight: 350 });
+    this.load.spritesheet('morenoAndando', '/sprite/Moreno/morenoAndando.png', { frameWidth: 130, frameHeight: 350 });
+    this.load.spritesheet('morenoPulando', '/sprite/Moreno/morenoPulando.png', { frameWidth: 130, frameHeight: 350 });
 
     try {
       this.load.image('background', '/backgrounds/menu.png'); // Assuming served from public root
@@ -225,12 +230,16 @@ export default class FightScene extends Phaser.Scene {
   }
 
   createAnimations() {
-    this.anims.create({ key: 'player-idle', frames: this.anims.generateFrameNumbers('player', { start: 0, end: 0 }), frameRate: 8, repeat: -1 });
-    this.anims.create({ key: 'player-walk', frames: this.anims.generateFrameNumbers('player', { start: 1, end: 1 }), frameRate: 8, repeat: -1 });
-    this.anims.create({ key: 'player-attack', frames: this.anims.generateFrameNumbers('player', { start: 2, end: 2 }), frameRate: 8, repeat: 0 });
-    this.anims.create({ key: 'enemy-idle', frames: this.anims.generateFrameNumbers('enemy', { start: 0, end: 0 }), frameRate: 8, repeat: -1 });
-    this.anims.create({ key: 'enemy-walk', frames: this.anims.generateFrameNumbers('enemy', { start: 1, end: 1 }), frameRate: 8, repeat: -1 });
-    this.anims.create({ key: 'enemy-attack', frames: this.anims.generateFrameNumbers('enemy', { start: 2, end: 2 }), frameRate: 8, repeat: 0 });
+    this.anims.create({ key: 'player-idle', frames: this.anims.generateFrameNumbers('brenoAndando', { start: 1, end: 1 }), frameRate: 8, repeat: -1 });
+    this.anims.create({ key: 'player-walk', frames: this.anims.generateFrameNumbers('brenoAndando', { start: 2, end: 4}), frameRate: 8, repeat: -1 }); 
+    this.anims.create({ key: 'player-attack', frames: this.anims.generateFrameNumbers('brenoAtaque', { start: 1, end: 4 }), frameRate: 15, repeat: 0 });
+    this.anims.create({ key: 'player-jump', frames: this.anims.generateFrameNumbers('brenoPulando', { start: 1, end: 1 }), frameRate: 8, repeat: -1 });
+    this.anims.create({ key: 'player-block', frames: this.anims.generateFrameNumbers('brenoDefendendo', { start: 2, end: 2 }), frameRate: 8 , repeat: -1 });
+
+    this.anims.create({ key: 'enemy-idle', frames: this.anims.generateFrameNumbers('morenoAndando', { start: 0, end: 0 }), frameRate: 8, repeat: -1 });
+    this.anims.create({ key: 'enemy-walk', frames: this.anims.generateFrameNumbers('morenoAndando', { start: 1, end: 4 }), frameRate: 8, repeat: -1 });
+    this.anims.create({ key: 'enemy-attack', frames: this.anims.generateFrameNumbers('morenoAtaque', { start: 0, end: 4 }), frameRate: 15, repeat: 0 });
+    this.anims.create({ key: 'enemy-jump', frames: this.anims.generateFrameNumbers('morenoPulando', { start: 2, end: 2 }), frameRate: 8, repeat: -1 });
   }
 
   update() {
@@ -245,14 +254,14 @@ export default class FightScene extends Phaser.Scene {
 
   damagePlayer(amount) {
     if (this.roundOver || !this.player) return;
-    this.player.takeDamage(amount);
+    this.player.takeDamage(amount);// essa função takeDaage vem do player.js
     this.updateHealthBars();
     console.log(`FightScene: Player damaged, health: ${this.player.health}`);
   }
 
   damageEnemy(amount) {
     if (this.roundOver || !this.enemy) return;
-    this.enemy.takeDamage(amount);
+    this.enemy.takeDamage(amount); // essa função takeDaage vem do player.js
     this.updateHealthBars();
     console.log(`FightScene: Enemy damaged, health: ${this.enemy.health}`);
   }
@@ -398,4 +407,3 @@ export default class FightScene extends Phaser.Scene {
       // if (this.enemy) this.enemy.x = width * 0.7;
   }
 }
-
