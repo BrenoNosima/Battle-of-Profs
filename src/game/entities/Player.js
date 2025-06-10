@@ -18,7 +18,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.setCollideWorldBounds(true);
         this.setBounce(0.1);
         this.setSize(60, 200); // Ajustar hitbox
-        this.setOffset(70, 10); // Ajustar offset da hitbox se necessário
+        this.setOffset(70, 40); // Ajustar offset da hitbox se necessário
 
         console.log("Player: Entidade criada");
 
@@ -58,19 +58,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         // Pulo com W
-        if (keys.w.isDown && this.body.onFloor()) {
+        if (keys.w.isDown && this.body.onFloor() && !this.isBlocking) {
             this.setVelocityY(-1100);
-            this.play('player-jump', true);
+            this.play('player-jump', true); // chama a sprite pulo
             this.setGravityY(2000);
         }
 
         // Se estiver no ar, garante que está na animação de pulo
-        if (!this.body.onFloor() && this.anims.currentAnim?.key !== 'player-jump') {
+        if (!this.body.onFloor() && this.anims.currentAnim?.key !== 'player-jump') { // se o personagem não está tocando o chão e a animação não é a de pulo
             this.play('player-jump', true);
         }
 
         // Volta para idle ao aterrissar
-        if (this.body.onFloor() && this.anims.currentAnim?.key === 'player-jump') {
+        if (this.body.onFloor() && this.anims.currentAnim?.key === 'player-jump') { // se o personagem estiver no chão e animação for de pulo
             this.play('player-idle', true);
         }
 
@@ -93,7 +93,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     attack() {
-        if (this.attackCooldown || this.scene.roundOver || this.isBlocking) return;
+        if (this.attackCooldown || this.scene.roundOver || this.isBlocking || !this.body.onFloor()) return; // se caso alguma dessas condições for verdadeira ele não ataca
+        //se estiver em cooldown    round acabou            o jogador está bloqueando     estiver fora do chão
 
         console.log("Player: Atacando");
         this.attackCooldown = true;
@@ -166,7 +167,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.scene.time.delayedCall(150, () => {
             this.clearTint();
         });
-
     }
 
     startBlock() {  // metodo que ativa a defesa do jogador
