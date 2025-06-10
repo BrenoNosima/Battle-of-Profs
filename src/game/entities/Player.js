@@ -10,6 +10,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.health = 250;
         this.attackCooldown = false;
+        this.blockCooldown = false; // Inicializa blockCooldown como false
+        this.dashCooldown = false;  // Inicializa dashCooldown como false
+        this.isBlocking = false;    // Inicializa isBlocking como false
         this.speed = 400;
         this.attackRange = 100;
         this.attackDamage = 10;
@@ -34,6 +37,24 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocityX(0);
         this.blockSprite.setPosition(this.x, this.y);
 
+        // Dash com X
+        if (Phaser.Input.Keyboard.JustDown(keys.x) && !this.dashCooldown) {
+            console.log("Player: Executando dash");
+            this.dash();
+            return; // Retorna para evitar outras ações durante o dash
+        }
+
+        // BLOQUEIO COM SHIFT
+        if (keys.shift.isDown && !this.blockCooldown) {
+            this.startBlock();
+            return;
+        } else if (this.isBlocking && !keys.shift.isDown) {
+            this.stopBlock();
+            // Deixa seguir para idle ou outras animações
+        } else if (this.isBlocking) {
+            // Se ainda está bloqueando (ex: cooldown), não faz mais nada
+            return;
+        }
 
         // Movimento com A e D
         if (keys.a.isDown) {
@@ -77,18 +98,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // Ataque com espaço
         if (Phaser.Input.Keyboard.JustDown(keys.space) && !this.attackCooldown) { // só vai ocorrer se for clicado espaço e se nao estiver em cooldown
             this.attack();
-        }
-
-       // BLOQUEIO COM SHIFT
-        if (keys.shift.isDown && !this.blockCooldown) {
-            this.startBlock();
-            return;
-        } else if (this.isBlocking && !keys.shift.isDown) {
-            this.stopBlock();
-            // Deixa seguir para idle ou outras animações
-        } else if (this.isBlocking) {
-            // Se ainda está bloqueando (ex: cooldown), não faz mais nada
-            return;
         }
     }
 
@@ -171,14 +180,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     startBlock() {  // metodo que ativa a defesa do jogador
         if (this.blockCooldown) return;
+        
+        console.log("Player: Iniciando bloqueio");
         this.isBlocking = true;
         this.blockSprite.setVisible(true);
         this.setTint(0x00ffff);
         this.play('player-block', true); // Sempre força a animação de defesa
-        }
+    }
 
     stopBlock() {
         if (this.isBlocking) {
+            console.log("Player: Parando bloqueio");
             this.isBlocking = false;
             this.blockSprite.setVisible(false);
             this.clearTint();
@@ -219,6 +231,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
             this.scene.time.delayedCall(500, () => {
                 this.blockCooldown = false;
+                console.log("Player: Cooldown de bloqueio finalizado");
                 // Se o jogador ainda estiver segurando SHIFT, volta a bloquear automaticamente
                 if (this.scene.keys.shift.isDown) {
                     this.startBlock();
@@ -232,6 +245,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         // Se estiver em cooldown, não permite novo dash
         if (this.dashCooldown) return;
 
+        console.log("Player: Executando dash");
+        
         // Direção do dash: para onde o player está olhando
         const dashDirection = this.flipX ? -1 : 1;
         const dashSpeed = 300; // 5x mais rápido que o normal
@@ -287,6 +302,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.dashCooldown = true;
         this.scene.time.delayedCall(dashCooldownTime, () => {
             this.dashCooldown = false;
+            console.log("Player: Cooldown de dash finalizado");
         });
 
         // Mantém a invulnerabilidade durante todo o cooldown do dash
