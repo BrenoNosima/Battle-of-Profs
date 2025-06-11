@@ -99,6 +99,14 @@ export default {
       this.currentRound = currentRound;
       this.playerWins = playerWins;
       this.enemyWins = enemyWins;
+    },
+
+    nextLevel() {
+      console.log("GameContainer: Avançando para o próximo nível (inspira-space)!");
+      // Para a cena atual (FightScene)
+      this.game.scene.stop("FightScene");
+      // Inicia a FightScene novamente, passando o backgroundKey para 'inspira-space'
+      this.game.scene.start("FightScene", { vueComponentRef: this, backgroundKey: "inspira-space" });
     }
   }
 };

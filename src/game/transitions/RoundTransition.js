@@ -301,7 +301,7 @@ export default class RoundTransition {
                 const continueText = this.scene.add.text(
                   this.scene.cameras.main.width / 2,
                   this.scene.cameras.main.height / 2 + 50,
-                  'Pressione ESPAÇO para continuar',
+                  'Pressione E para continuar',
                   {
                     fontSize: '24px',
                     fill: '#fff',
@@ -311,13 +311,12 @@ export default class RoundTransition {
                   }
                 ).setOrigin(0.5).setDepth(20);
                 
-                // Listener para espaço
-                this.scene.input.keyboard.once('keydown-SPACE', () => {
+                // Listener para E
+                this.scene.input.keyboard.once("keydown-E", () => {
                   if (this.scene.vueComponent && this.scene.vueComponent.nextLevel) {
                     this.scene.vueComponent.nextLevel();
                   } else {
-                    // Fallback se não houver função nextLevel
-                    this.scene.vueComponent.restartGame();
+                    console.warn("FightScene: vueComponent.nextLevel não está definido. Implemente esta função para avançar para o próximo nível.");
                   }
                   resolve();
                 });
