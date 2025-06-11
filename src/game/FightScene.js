@@ -38,9 +38,11 @@ export default class FightScene extends Phaser.Scene {
     console.log("FightScene: Init com dados", data);
     if (data && data.vueComponentRef) {
         this.vueComponent = data.vueComponentRef; // Get the reference passed from GameContainer
+    }
+    if (data && data.backgroundKey) {
+        this.initialBackgroundKey = data.backgroundKey;
     } else {
-        console.error("FightScene: Referência do vueComponent não recebida no init!");
-        // Handle the error appropriately, maybe stop the scene or use default behavior
+        this.initialBackgroundKey = 'background'; // Default background
     }
     // Reset round state if restarting
     this.currentRound = this.vueComponent ? this.vueComponent.currentRound : 1;
@@ -85,8 +87,8 @@ export default class FightScene extends Phaser.Scene {
     }
     console.log('FightScene: Método create chamado!');
 
-    if (this.textures.exists('background')) {
-      const bg = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, 'background');
+    if (this.textures.exists(this.initialBackgroundKey)) {
+      const bg = this.add.image(this.cameras.main.width / 2, this.cameras.main.height / 2, this.initialBackgroundKey);
       const scaleX = this.cameras.main.width / bg.width;
       const scaleY = this.cameras.main.height / bg.height;
       const scale = Math.max(scaleX, scaleY);
@@ -137,7 +139,8 @@ export default class FightScene extends Phaser.Scene {
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       w: Phaser.Input.Keyboard.KeyCodes.W,
       shift: Phaser.Input.Keyboard.KeyCodes.SHIFT,
-      x: Phaser.Input.Keyboard.KeyCodes.X
+      x: Phaser.Input.Keyboard.KeyCodes.X,
+      e: Phaser.Input.Keyboard.KeyCodes.E
     });
 
     this.roundOver = false;
@@ -330,45 +333,53 @@ export default class FightScene extends Phaser.Scene {
       const enemyHasMajority = this.enemyWins >= 2;   // Perdeu 2 rounds
       const isLastRound = this.currentRound >= this.totalRounds;
 
-      if (isLastRound || playerHasMajority || enemyHasMajority) {
-        // Determina o resultado final
-        if (playerHasMajority) {
-          // Jogador ganhou 2 rounds - transição para novo cenário
-          await this.roundTransition.transitionToNewScene('background2');
-        } else if (enemyHasMajority) {
-          // Jogador perdeu 2 rounds - mostra tela de jogar novamente
-          await this.roundTransition.showGameOverScreen();
-        } else {
-          // Caso de empate ou outro resultado
-          let finalMessage = '';
-          if (this.playerWins > this.enemyWins) {
-            finalMessage = 'Vitória!';
-          } else if (this.enemyWins > this.playerWins) {
-            finalMessage = 'Game Over';
-          } else {
-            finalMessage = 'Empate Final!';
+      if (playerHasMajority) {
+        // Jogador ganhou 2 rounds - transição para novo cenário
+        await this.roundTransition.transitionToNewScene("background2");
+        const nextFightText = this.add.text(
+          this.cameras.main.width / 2,
+          this.cameras.main.height / 2 + 60,
+          'Pressione E para ir para a próxima luta',
+          { fontSize: '24px', fill: '#fff', stroke: '#000', strokeThickness: 2 }
+        ).setOrigin(0.5).setDepth(10);
+
+        this.input.keyboard.once('keydown-E', async () => {
+          nextFightText.destroy();
+          // Here you would transition to the next "island" or game level
+          // For now, we'll just restart the scene with the new background
+          this.scene.restart({ vueComponentRef: this.vueComponent });
+        });
+      } else if (enemyHasMajority) {
+        // Jogador perdeu 2 rounds - mostra tela de jogar novamente
+        await this.roundTransition.showGameOverScreen();
+        const restartText = this.add.text(
+          this.cameras.main.width / 2,
+          this.cameras.main.height / 2 + 60,
+          'Pressione ESPAÇO para reiniciar',
+          { fontSize: '24px', fill: '#fff', stroke: '#000', strokeThickness: 2 }
+        ).setOrigin(0.5).setDepth(10);
+
+        this.input.keyboard.once('keydown-SPACE', () => {
+          if (this.vueComponent) {
+            this.vueComponent.restartGame();
           }
-          await this.roundTransition.show(finalMessage, 3000);
-
-          const restartText = this.add.text(
-            this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 60,
-            'Pressione ESPAÇO para reiniciar',
-            { fontSize: '24px', fill: '#fff', stroke: '#000', strokeThickness: 2 }
-          ).setOrigin(0.5).setDepth(10);
-
-          this.input.keyboard.once('keydown-SPACE', () => {
-            if (this.vueComponent) {
-              this.vueComponent.restartGame();
-            }
-          });
+        });
+      } else if (isLastRound) {
+        // Caso de empate ou outro resultado no último round
+        let finalMessage = '';
+        if (this.playerWins > this.enemyWins) {
+          finalMessage = 'Vitória!';
+        } else if (this.enemyWins > this.playerWins) {
+          finalMessage = 'Game Over';
+        } else {
+          finalMessage = 'Empate Final!';
         }
+        await this.roundTransition.show(finalMessage, 3000);
       } else {
-        // Próximo round
+        // Próximo round (não é o último e ninguém ganhou 2 rounds ainda)
         this.currentRound++;
         await this.roundTransition.show(`Próximo Round: ${this.currentRound}`);
-        // Restart the scene, Phaser will call init() again with the data
-        this.scene.restart({ vueComponentRef: this.vueComponent }); 
+        this.scene.restart({ vueComponentRef: this.vueComponent });
       }
     }
   }
