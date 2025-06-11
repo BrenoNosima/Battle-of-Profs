@@ -84,12 +84,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.play('player-jump', true); // chama a sprite pulo
             this.setGravityY(2000);
         }
-
         // Se estiver no ar, garante que está na animação de pulo
         if (!this.body.onFloor() && this.anims.currentAnim?.key !== 'player-jump') { // se o personagem não está tocando o chão e a animação não é a de pulo
             this.play('player-jump', true);
         }
-
         // Volta para idle ao aterrissar
         if (this.body.onFloor() && this.anims.currentAnim?.key === 'player-jump') { // se o personagem estiver no chão e animação for de pulo
             this.play('player-idle', true);
@@ -108,6 +106,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         console.log("Player: Atacando");
         this.attackCooldown = true;
         this.play('player-attack', true);
+
+        this.scene.sound.play('punchSound'); // Toca o som do ataque
 
         // Referência ao inimigo (obtida da cena)
         const enemy = this.scene.enemy;
@@ -205,6 +205,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             this.clearTint();
             this.play('player-idle', true);
 
+            this.scene.sound.play('blockSound'); // Toca o som do bloqueio
+
             // Inicia cooldown de bloqueio
             this.blockCooldown = true;
 
@@ -266,6 +268,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
         // Torna o jogador invulnerável durante o dash
         this.isInvulnerable = true;
+
+        this.scene.sound.play('dashSound'); // Toca o som do dash
 
         // Animação de dash (opcional)
         this.play('player-dash', true);

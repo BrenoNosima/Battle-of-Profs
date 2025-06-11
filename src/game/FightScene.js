@@ -68,6 +68,11 @@ export default class FightScene extends Phaser.Scene {
     }
     // Platform image (using data URI, no path needed)
     this.load.image('platform', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAAAUCAYAAAB7wJiVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAnSURBVHgB7cxBDQAADMOwkb/RpYfYgQT2tgEAAAAAAAAAAADwwAB9pgABKZ/t3QAAAABJRU5ErkJggg==');
+
+    this.load.audio('punchSound', 'public/sounds/soco.mp3');
+    this.load.audio('dashSound', 'public/sounds/dash.mp3');
+    this.load.audio('blockSound', 'public/sounds/block.mp3');
+    this.load.audio('puloSound', 'public/sounds/pulo.mp3');
   }
 
   async create() {
