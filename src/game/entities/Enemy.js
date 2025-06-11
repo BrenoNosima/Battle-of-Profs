@@ -19,7 +19,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.setCollideWorldBounds(true);
         this.setBounce(0.1);
         this.setSize(60, 200); // Adjust hitbox
-        this.setOffset(70, 10); // Adjust offset
+        this.setOffset(70,10); // Adjust offset
         this.setTint(0x00ffff); // Distinguishing color
 
         console.log("Enemy: Entidade criada");

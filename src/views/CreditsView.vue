@@ -34,7 +34,7 @@ import CreditProfile from '@/components/CreditProfile.vue'; // Importa o compone
 // mas para este exemplo, definimos diretamente aqui.
 const profiles = ref([
   {
-    id: 1,
+    id: 1, //estamos arrumando
     name: "Henrique\nIkeda",
     imageName: "minha ft.jpg", // Nome exato do arquivo em src/assets/img/
     githubUrl: "https://github.com/Henrique-Ikeda",
