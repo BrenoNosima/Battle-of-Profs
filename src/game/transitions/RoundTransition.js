@@ -292,7 +292,8 @@ export default class RoundTransition {
                     fill: '#fff',
                     stroke: '#000',
                     strokeThickness: 6,
-                    fontStyle: 'bold'
+                    fontStyle: 'bold',
+                    fontFamily: "'Press Start 2P', cursive, sans-serif"
                   }
                 ).setOrigin(0.5).setDepth(20);
                 
@@ -305,7 +306,8 @@ export default class RoundTransition {
                     fontSize: '24px',
                     fill: '#fff',
                     stroke: '#000',
-                    strokeThickness: 3
+                    strokeThickness: 3,
+                    fontFamily: "'Press Start 2P', cursive, sans-serif"
                   }
                 ).setOrigin(0.5).setDepth(20);
                 
@@ -358,7 +360,8 @@ export default class RoundTransition {
           fill: '#ff0000',
           stroke: '#000',
           strokeThickness: 6,
-          fontStyle: 'bold'
+          fontStyle: 'bold',
+          fontFamily: "'Press Start 2P', cursive, sans-serif"
         }
       ).setOrigin(0.5);
       container.add(title);
@@ -371,7 +374,8 @@ export default class RoundTransition {
           fontSize: '32px',
           fill: '#ffffff',
           stroke: '#000',
-          strokeThickness: 4
+          strokeThickness: 4,
+          fontFamily: "'Press Start 2P', cursive, sans-serif"
         }
       ).setOrigin(0.5);
       container.add(message);
@@ -386,6 +390,7 @@ export default class RoundTransition {
           stroke: '#000',
           strokeThickness: 3,
           backgroundColor: '#333333',
+          fontFamily: "'Press Start 2P', cursive, sans-serif",
           padding: {
             left: 20,
             right: 20,
@@ -405,6 +410,7 @@ export default class RoundTransition {
           stroke: '#000',
           strokeThickness: 3,
           backgroundColor: '#333333',
+          fontFamily: "'Press Start 2P', cursive, sans-serif",
           padding: {
             left: 20,
             right: 20,
@@ -422,7 +428,8 @@ export default class RoundTransition {
         'Deseja jogar novamente?',
         {
           fontSize: '24px',
-          fill: '#ffffff'
+          fill: '#ffffff',
+          fontFamily: "'Press Start 2P', cursive, sans-serif"
         }
       ).setOrigin(0.5);
       container.add(question);

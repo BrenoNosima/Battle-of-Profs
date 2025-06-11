@@ -119,7 +119,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
             // Chamar método da cena para causar dano e empurrar
             this.scene.damageEnemy(this.attackDamage);
 
-            // Empurrar o inimigo (a cena pode lidar com isso ou a entidade)   EM POUCAS PALAVRAS E A REAÇÃO DO BONECO AO LEVAR O SOCO
+            // Empurrar o inimigo (a cena pode lidar com isso ou a entidade)
             const angle = Phaser.Math.Angle.Between(this.x, this.y, enemy.x, enemy.y);
             enemy.setVelocity(
                 Math.cos(angle) * 300, 
@@ -158,21 +158,30 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     takeDamage(amount) { // é chamada lá no FightScene.js
 
-         if (this.isBlocking) {
+        // 1. Se estiver bloqueando, ignora o dano
+        if (this.isBlocking) {
             console.log("Ataque bloqueado! Sem dano recebido.");
-            return; // bloqueia o dano
+            return; // Sai da função, não toma dano
         }
 
+        // 2. Se já está com vida zero ou menor, não faz nada
         if (this.health <= 0) return; // Já derrotado
 
+        // 3. Subtrai o valor do dano da vida atual
         this.health -= amount;
+
+        // 4. Se a vida ficou menor que zero, ajusta para zero
         if (this.health < 0) {
             this.health = 0;
         }
+
+        // 5. Mostra no console quanto de dano foi recebido e a vida atual
         console.log(`Player: Recebeu ${amount} de dano. Vida: ${this.health}`);
 
-        // Efeito visual de dano (piscar em vermelho)
+        // 6. Efeito visual: faz o personagem piscar em vermelho
         this.setTintFill(0xff0000);
+
+        // 7. Após 150ms, remove o efeito visual (volta ao normal)
         this.scene.time.delayedCall(150, () => {
             this.clearTint();
         });
