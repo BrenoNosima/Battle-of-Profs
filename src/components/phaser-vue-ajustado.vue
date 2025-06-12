@@ -57,12 +57,17 @@ export default {
           super('FightScene');
           this.player = null;
           this.enemy = null;
+          this.player2 = null; // Novo: referência ao player2
           this.keys = null;
+          this.keysP2 = null; // Novo: teclas do player2
           this.playerAttackCooldown = false;
           this.enemyAttackCooldown = false;
           this.specialCooldown = false;
+          this.player2AttackCooldown = false; // Novo: cooldown player2
+          this.player2SpecialCooldown = false; // Novo: cooldown especial player2
           this.roundOver = false;
           this.ground = null;
+          this.is2P = false; // Novo: modo 2 jogadores
         }
         
         preload() {
@@ -145,12 +150,24 @@ export default {
           this.player.play('player-idle');
           this.enemy.play('enemy-idle');
           
-          // Adicionar teclas A, D, espaço e especial (L)
+          // Adicionar teclas A, D, espaço e especial (L) para player1
           this.keys = this.input.keyboard.addKeys({
             a: Phaser.Input.Keyboard.KeyCodes.A,
             d: Phaser.Input.Keyboard.KeyCodes.D,
             space: Phaser.Input.Keyboard.KeyCodes.SPACE,
             special: Phaser.Input.Keyboard.KeyCodes.L
+          });
+          // Novo: Adicionar teclas para player2 (setas, Enter, Shift direito)
+          this.keysP2 = this.input.keyboard.addKeys({
+            left: Phaser.Input.Keyboard.KeyCodes.LEFT,
+            right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+            enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+            shift: Phaser.Input.Keyboard.KeyCodes.SHIFT
+          });
+          // Novo: Alternar modo 2P pressionando M
+          this.input.keyboard.on('keydown-M', () => {
+            this.is2P = !this.is2P;
+            this.showGameMessage(this.is2P ? 'Modo 2 Jogadores!' : 'Modo 1 Jogador!');
           });
           
           // Resetar estado do jogo
@@ -397,9 +414,60 @@ export default {
             duration: 700,
             ease: 'Cubic.easeOut',
             onComplete: () => {
-              this.waitingStart = false;
+              this.showCountdown(() => {
+                this.waitingStart = false;
+              });
             }
           });
+        }
+
+        // Novo: Tela de contagem regressiva animada
+        showCountdown(callback) {
+          this.waitingStart = true;
+          const centerX = this.cameras.main.width / 2;
+          const centerY = this.cameras.main.height / 2;
+          const sequence = ['3', '2', '1', 'LUTE!'];
+          let idx = 0;
+          const showNext = () => {
+            if (idx >= sequence.length) {
+              this.waitingStart = false;
+              if (typeof callback === 'function') callback();
+              return;
+            }
+            const isFight = idx === 3;
+            const text = this.add.text(centerX, centerY, sequence[idx], {
+              fontFamily: 'Orbitron, Arial, sans-serif',
+              fontSize: isFight ? '80px' : '72px',
+              color: isFight ? '#ff006a' : '#fff',
+              align: 'center',
+              stroke: '#00fff7',
+              strokeThickness: 8,
+              shadow: { offsetX: 0, offsetY: 0, color: '#00fff7', blur: 24, fill: true }
+            }).setOrigin(0.5).setScale(0.7).setAlpha(0);
+            this.tweens.add({
+              targets: text,
+              alpha: 1,
+              scale: 1.2,
+              duration: 220,
+              yoyo: false,
+              ease: 'Back.Out',
+              onComplete: () => {
+                this.tweens.add({
+                  targets: text,
+                  alpha: 0,
+                  scale: 1.5,
+                  duration: 350,
+                  delay: 500,
+                  onComplete: () => {
+                    text.destroy();
+                    idx++;
+                    showNext();
+                  }
+                });
+              }
+            });
+          };
+          showNext();
         }
 
         showEndScreen(vencedor) {
@@ -642,62 +710,82 @@ export default {
         
         update() {
           if (this.isPaused) return;
-          if (this.waitingStart) return;
-
-          // Não atualizar se o round acabou
+          if (this.waitingStart) {
+            // Garante que o inimigo não se mova durante a contagem
+            if (!this.is2P) {
+              this.enemy.setVelocityX(0);
+              this.enemy.play('enemy-idle', true);
+            }
+            return;
+          }
           if (this.roundOver) return;
-          
-          // Velocidade de movimento
           const speed = 160;
-          
-          // Resetar velocidade horizontal do jogador (mantendo a vertical para gravidade)
+          // Player 1
           this.player.setVelocityX(0);
-
           let isWalking = false;
-          
-          // Movimento com A e D (apenas lateral)
           if (this.keys.a.isDown) {
             this.player.setVelocityX(-speed);
-            this.player.flipX = true; // Virar para a esquerda
+            this.player.flipX = true;
             this.player.play('player-walk', true);
             isWalking = true;
           } else if (this.keys.d.isDown) {
             this.player.setVelocityX(speed);
-            this.player.flipX = false; // Virar para a direita
+            this.player.flipX = false;
             this.player.play('player-walk', true);
             isWalking = true;
           } else if (!this.playerAttackCooldown) {
-            // Se não estiver se movendo nem atacando, voltar para idle
             this.player.play('player-idle', true);
           }
-
-          // Efeito de pulo/oscilar ao andar
           if (isWalking && !this.playerAttackCooldown) {
             this.player.y += Math.sin(this.time.now / 80) * 1.5;
-            // Poeira nos pés
             if (!this.lastDustTime || this.time.now - this.lastDustTime > 110) {
               this.dustParticles.emitParticleAt(this.player.x, this.player.y + 90, 1);
               this.lastDustTime = this.time.now;
             }
           }
-          
-          // Ataque com espaço
           if (Phaser.Input.Keyboard.JustDown(this.keys.space) && !this.playerAttackCooldown) {
             this.playerAttack();
           }
-
-          // Ataque especial com L
           if (Phaser.Input.Keyboard.JustDown(this.keys.special) && !this.playerAttackCooldown && !this.specialCooldown) {
             this.playerSpecialAttack();
           }
-          
-          // IA simples para o inimigo
-          this.updateEnemyAI();
-          
-          // Atualizar barras de vida
+          // Player 2 (se modo 2P)
+          if (this.is2P) {
+            this.enemy.setVelocityX(0);
+            let isWalking2 = false;
+            if (this.keysP2.left.isDown) {
+              this.enemy.setVelocityX(-speed);
+              this.enemy.flipX = true;
+              this.enemy.play('enemy-walk', true);
+              isWalking2 = true;
+            } else if (this.keysP2.right.isDown) {
+              this.enemy.setVelocityX(speed);
+              this.enemy.flipX = false;
+              this.enemy.play('enemy-walk', true);
+              isWalking2 = true;
+            } else if (!this.player2AttackCooldown) {
+              this.enemy.play('enemy-idle', true);
+            }
+            if (isWalking2 && !this.player2AttackCooldown) {
+              this.enemy.y += Math.sin(this.time.now / 80) * 1.5;
+              if (!this.lastDustTime2 || this.time.now - this.lastDustTime2 > 110) {
+                this.dustParticles.emitParticleAt(this.enemy.x, this.enemy.y + 90, 1);
+                this.lastDustTime2 = this.time.now;
+              }
+            }
+            if (Phaser.Input.Keyboard.JustDown(this.keysP2.enter) && !this.player2AttackCooldown) {
+              this.player2Attack();
+            }
+            if (Phaser.Input.Keyboard.JustDown(this.keysP2.shift) && !this.player2AttackCooldown && !this.player2SpecialCooldown) {
+              this.player2SpecialAttack();
+            }
+          } else {
+            // IA simples para o inimigo
+            if (!this.waitingStart) {
+              this.updateEnemyAI();
+            }
+          }
           this.updateHealthBars();
-          
-          // Verificar fim do round
           this.checkRoundEnd();
         }
         
@@ -837,6 +925,126 @@ export default {
           });
         }
 
+        // Novo: Ataque do player2
+        player2Attack() {
+          this.player2AttackCooldown = true;
+          this.enemy.play('enemy-attack', true);
+          // Verificar se o player está no alcance do ataque
+          const attackRange = 100;
+          const distance = Phaser.Math.Distance.Between(
+            this.enemy.x, this.enemy.y,
+            this.player.x, this.player.y
+          );
+          if (distance < attackRange) {
+            this.damagePlayer(15);
+            const angle = Phaser.Math.Angle.Between(
+              this.enemy.x, this.enemy.y,
+              this.player.x, this.player.y
+            );
+            this.player.setVelocity(
+              Math.cos(angle) * 300,
+              Math.sin(angle) * 150
+            );
+            this.createHitParticles(this.player.x, this.player.y, 0x00ffff);
+          }
+          this.time.delayedCall(500, () => {
+            this.enemy.play('enemy-idle', true);
+            this.time.delayedCall(800, () => {
+              this.player2AttackCooldown = false;
+            });
+          });
+        }
+        // Novo: Especial do player2
+        player2SpecialAttack() {
+          this.player2AttackCooldown = true;
+          this.player2SpecialCooldown = true;
+          const phrase = this.add.text(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 + 80,
+            'TOMA ESSA!',
+            {
+              fontFamily: 'Orbitron, Arial, sans-serif',
+              fontSize: '44px',
+              color: '#ff006a',
+              align: 'center',
+              stroke: '#fff',
+              strokeThickness: 6,
+              shadow: { offsetX: 0, offsetY: 0, color: '#ff006a', blur: 24, fill: true }
+            }
+          ).setOrigin(0.5);
+          this.tweens.add({
+            targets: phrase,
+            scale: 1.2,
+            duration: 180,
+            yoyo: true,
+            repeat: 2,
+            onComplete: () => phrase.destroy()
+          });
+          // Efeito visual: símbolos de lógica flutuando
+          const logicSymbols = ['&&', '||', '!', 'if', 'else', '{', '}', '==', '!=', '>=', '<='];
+          for (let i = 0; i < 7; i++) {
+            const symbol = this.add.text(
+              this.enemy.x + Phaser.Math.Between(-40, 40),
+              this.enemy.y - 80 + Phaser.Math.Between(-20, 20),
+              Phaser.Utils.Array.GetRandom(logicSymbols),
+              {
+                fontFamily: 'monospace',
+                fontSize: '22px',
+                color: '#fff',
+                stroke: '#ff006a',
+                strokeThickness: 3
+              }
+            ).setOrigin(0.5);
+            this.tweens.add({
+              targets: symbol,
+              y: symbol.y - Phaser.Math.Between(30, 60),
+              alpha: 0,
+              duration: 700,
+              delay: i * 60,
+              onComplete: () => symbol.destroy()
+            });
+          }
+          // Lançar bloco de código (projetil)
+          const codeBlock = this.add.text(
+            this.enemy.x + 30 * (this.enemy.flipX ? -1 : 1),
+            this.enemy.y - 30,
+            '{ while (x > 0) x--; }',
+            {
+              fontFamily: 'monospace',
+              fontSize: '20px',
+              color: '#ff006a',
+              stroke: '#fff',
+              strokeThickness: 3
+            }
+          ).setOrigin(0.5);
+          this.physics.add.existing(codeBlock);
+          codeBlock.body.setAllowGravity(false);
+          codeBlock.body.setVelocityX(420 * (this.enemy.flipX ? -1 : 1));
+          const checkHit = this.time.addEvent({
+            delay: 16,
+            callback: () => {
+              if (Phaser.Geom.Intersects.RectangleToRectangle(codeBlock.getBounds(), this.player.getBounds())) {
+                this.damagePlayer(35);
+                this.createCodeExplosion(this.player.x, this.player.y);
+                codeBlock.destroy();
+                checkHit.remove();
+              }
+            },
+            callbackScope: this,
+            loop: true
+          });
+          this.time.delayedCall(1200, () => {
+            if (codeBlock && codeBlock.active) codeBlock.destroy();
+            checkHit.remove();
+          });
+          this.time.delayedCall(2000, () => {
+            this.player2SpecialCooldown = false;
+          });
+          this.time.delayedCall(700, () => {
+            this.player2AttackCooldown = false;
+          });
+        }
+
         createCodeExplosion(x, y) {
           // Partículas de código binário e símbolos
           const symbols = ['1010', '1101', '&&', '||', '!', '{', '}', '=='];
@@ -897,21 +1105,29 @@ export default {
         }
 
         createHitParticles(x, y, color) {
-          // Faíscas realistas: amarelo, laranja e branco
-          const colors = [0xffff00, 0xffa500, 0xffffff];
-          const emitter = this.add.particles(x, y, null, {
-            lifespan: { min: 280, max: 480 },
-            speed: { min: 220, max: 420 },
-            angle: { min: 0, max: 360 },
-            gravityY: 400,
-            scale: { start: 0.32, end: 0 },
-            alpha: { start: 1, end: 0 },
-            quantity: 14,
-            blendMode: 'ADD',
-            tint: colors
-          });
-          emitter.emitParticle(14);
-          this.time.delayedCall(480, () => emitter.destroy());
+          // Faíscas realistas: amarelo, laranja e branco (usando Graphics ao invés de partículas do Phaser)
+          for (let i = 0; i < 14; i++) {
+            const angle = Phaser.Math.DegToRad(Phaser.Math.Between(0, 360));
+            const dist = Phaser.Math.Between(18, 48);
+            const px = x + Math.cos(angle) * dist;
+            const py = y + Math.sin(angle) * dist;
+            const sparkColors = [0xffff00, 0xffa500, 0xffffff];
+            const sparkColor = Phaser.Utils.Array.GetRandom(sparkColors);
+            const spark = this.add.graphics();
+            spark.lineStyle(Phaser.Math.Between(2, 4), sparkColor, 1);
+            spark.beginPath();
+            spark.moveTo(x, y);
+            spark.lineTo(px, py);
+            spark.strokePath();
+            spark.setAlpha(1);
+            spark.setDepth(300);
+            this.tweens.add({
+              targets: spark,
+              alpha: 0,
+              duration: 340,
+              onComplete: () => spark.destroy()
+            });
+          }
         }
         
         updateEnemyAI() {
@@ -1032,57 +1248,328 @@ export default {
             'Dica: return sempre encerra a função... e a paciência.'
           ];
           const tip = Phaser.Utils.Array.GetRandom(tips);
+
+          // Fundo escuro translúcido
+          const bg = this.add.rectangle(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2 + 80,
+            this.cameras.main.width * 0.7,
+            80,
+            0x181c24,
+            0.92
+          ).setOrigin(0.5);
+          bg.setDepth(200);
+
+          // Texto animado
           const tipText = this.add.text(
             this.cameras.main.width / 2,
             this.cameras.main.height / 2 + 80,
             tip,
             {
               fontFamily: 'Orbitron, Arial, sans-serif',
-              fontSize: '26px',
+              fontSize: '28px',
               color: '#ffeb3b',
               align: 'center',
               stroke: '#000',
-              strokeThickness: 4,
-              shadow: { offsetX: 0, offsetY: 0, color: '#000', blur: 12, fill: true }
+              strokeThickness: 6,
+              shadow: { offsetX: 0, offsetY: 0, color: '#000', blur: 16, fill: true }
             }
           ).setOrigin(0.5);
+          tipText.setDepth(201);
+          tipText.setAlpha(0);
+          tipText.setScale(0.7);
+
+          // Animação de entrada
           this.tweens.add({
             targets: tipText,
-            alpha: { from: 0, to: 1 },
-            duration: 300,
-            yoyo: true,
-            hold: 1200,
+            alpha: 1,
+            scale: 1.1,
+            duration: 320,
+            ease: 'Back.Out',
             onComplete: () => {
-              tipText.destroy();
-              if (typeof callback === 'function') callback();
+              // Efeito de partículas de brilho
+              for (let i = 0; i < 12; i++) {
+                const star = this.add.star(
+                  this.cameras.main.width / 2 + Phaser.Math.Between(-180, 180),
+                  this.cameras.main.height / 2 + 80 + Phaser.Math.Between(-30, 30),
+                  5, 2, 7, 0xffff00
+                ).setAlpha(0.7).setDepth(202);
+                this.tweens.add({
+                  targets: star,
+                  alpha: 0,
+                  y: star.y - Phaser.Math.Between(10, 30),
+                  duration: 700,
+                  delay: i * 40,
+                  onComplete: () => star.destroy()
+                });
+              }
+              // Fica visível por 1.3s
+              this.time.delayedCall(1300, () => {
+                // Fade out
+                this.tweens.add({
+                  targets: [tipText, bg],
+                  alpha: 0,
+                  duration: 400,
+                  onComplete: () => {
+                    tipText.destroy();
+                    bg.destroy();
+                    if (typeof callback === 'function') callback();
+                  }
+                });
+              });
             }
           });
         }
 
         showGameMessage(message, isFinal = false) {
-          // Adicionar texto com a mensagem
+          // Determinar tipo de mensagem
+          let emoji = '';
+          let animType = 'default';
+          let confettiColor = 0x00fff7;
+          let extraParticles = null;
+          const lowerMsg = message.toLowerCase();
+          if (lowerMsg.includes('vitória') || lowerMsg.includes('você venceu')) {
+            emoji = '🏆';
+            animType = 'fall';
+            confettiColor = 0x00ff99;
+            extraParticles = 'confetti';
+          } else if (lowerMsg.includes('perdeu') || lowerMsg.includes('game over')) {
+            emoji = '💀';
+            animType = 'smoke';
+            confettiColor = 0x888888;
+            extraParticles = 'smoke';
+          } else if (lowerMsg.includes('empate')) {
+            emoji = '🤝';
+            animType = 'fade';
+            confettiColor = 0xffeb3b;
+            extraParticles = 'circle';
+          } else if (lowerMsg.includes('tempo')) {
+            emoji = '⏰';
+            animType = 'fade';
+            confettiColor = 0xff006a;
+          } else if (lowerMsg.includes('dica')) {
+            emoji = '💡';
+            animType = 'rise';
+            confettiColor = 0x00fff7;
+            extraParticles = 'code';
+          }
+
+          // Fundo escuro translúcido
+          const bg = this.add.rectangle(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            this.cameras.main.width * 0.7,
+            isFinal ? 120 : 80,
+            0x181c24,
+            0.93
+          ).setOrigin(0.5);
+          bg.setDepth(200);
+
+          // Emoji
+          let emojiText = null;
+          if (emoji) {
+            emojiText = this.add.text(
+              this.cameras.main.width / 2 - 120,
+              this.cameras.main.height / 2,
+              emoji,
+              {
+                fontSize: isFinal ? '60px' : '38px',
+                fontFamily: 'Arial',
+                align: 'center',
+                stroke: '#fff',
+                strokeThickness: 4
+              }
+            ).setOrigin(0.5).setDepth(202);
+            emojiText.setAlpha(0);
+          }
+
+          // Texto principal
           const textStyle = {
-            fontSize: isFinal ? '48px' : '32px',
-            fill: '#fff',
-            stroke: '#000',
-            strokeThickness: 4
+            fontFamily: 'Orbitron, Arial, sans-serif',
+            fontSize: isFinal ? '54px' : '36px',
+            color: '#fff',
+            align: 'center',
+            stroke: '#00fff7',
+            strokeThickness: 8,
+            shadow: { offsetX: 0, offsetY: 0, color: '#00fff7', blur: 24, fill: true }
           };
           const messageText = this.add.text(
-            this.cameras.main.width / 2,
+            this.cameras.main.width / 2 + (emoji ? 40 : 0),
             this.cameras.main.height / 2,
             message,
             textStyle
           ).setOrigin(0.5);
-          this.tweens.add({
-            targets: messageText,
-            scale: 1.2,
-            duration: 200,
-            yoyo: true,
-            repeat: 2,
-            onComplete: () => {
-              if (!isFinal) messageText.destroy();
+          messageText.setDepth(201);
+          messageText.setAlpha(0);
+          messageText.setScale(0.7);
+
+          // Animação de entrada personalizada
+          if (animType === 'fall') {
+            messageText.y -= 120;
+            if (emojiText) emojiText.y -= 120;
+            this.tweens.add({
+              targets: [messageText, emojiText].filter(Boolean),
+              y: "+=120",
+              alpha: 1,
+              scale: 1.13,
+              duration: 420,
+              ease: 'Bounce.Out',
+            });
+          } else if (animType === 'rise') {
+            messageText.y += 100;
+            if (emojiText) emojiText.y += 100;
+            this.tweens.add({
+              targets: [messageText, emojiText].filter(Boolean),
+              y: "-=100",
+              alpha: 1,
+              scale: 1.13,
+              duration: 420,
+              ease: 'Back.Out',
+            });
+          } else if (animType === 'smoke') {
+            messageText.setAlpha(0.2);
+            if (emojiText) emojiText.setAlpha(0.2);
+            this.tweens.add({
+              targets: [messageText, emojiText].filter(Boolean),
+              alpha: 1,
+              scale: 1.13,
+              duration: 320,
+              ease: 'Cubic.Out',
+            });
+          } else if (animType === 'fade') {
+            this.tweens.add({
+              targets: [messageText, emojiText].filter(Boolean),
+              alpha: 1,
+              scale: 1.13,
+              duration: 320,
+              ease: 'Sine.Out',
+            });
+          } else {
+            this.tweens.add({
+              targets: [messageText, emojiText].filter(Boolean),
+              alpha: 1,
+              scale: 1.13,
+              duration: 320,
+              ease: 'Back.Out',
+            });
+          }
+
+          // Partículas especiais
+          if (extraParticles === 'confetti') {
+            for (let i = 0; i < 24; i++) {
+              const conf = this.add.rectangle(
+                this.cameras.main.width / 2 + Phaser.Math.Between(-180, 180),
+                this.cameras.main.height / 2 - 60 + Phaser.Math.Between(-20, 20),
+                Phaser.Math.Between(6, 12),
+                Phaser.Math.Between(10, 18),
+                Phaser.Display.Color.RandomRGB().color
+              ).setAlpha(0.85).setDepth(202);
+              this.tweens.add({
+                targets: conf,
+                y: conf.y + Phaser.Math.Between(80, 180),
+                alpha: 0,
+                angle: Phaser.Math.Between(-90, 90),
+                duration: Phaser.Math.Between(700, 1200),
+                delay: i * 18,
+                onComplete: () => conf.destroy()
+              });
             }
-          });
+          } else if (extraParticles === 'smoke') {
+            for (let i = 0; i < 14; i++) {
+              const smoke = this.add.ellipse(
+                this.cameras.main.width / 2 + Phaser.Math.Between(-80, 80),
+                this.cameras.main.height / 2 + Phaser.Math.Between(-20, 20),
+                Phaser.Math.Between(24, 38),
+                Phaser.Math.Between(10, 18),
+                0x888888
+              ).setAlpha(0.22).setDepth(202);
+              this.tweens.add({
+                targets: smoke,
+                y: smoke.y - Phaser.Math.Between(30, 60),
+                alpha: 0,
+                scale: 1.3,
+                duration: Phaser.Math.Between(700, 1100),
+                delay: i * 30,
+                onComplete: () => smoke.destroy()
+              });
+            }
+          } else if (extraParticles === 'circle') {
+            for (let i = 0; i < 12; i++) {
+              const circ = this.add.circle(
+                this.cameras.main.width / 2,
+                this.cameras.main.height / 2,
+                10 + i * 8,
+                0xffeb3b,
+                0.08
+              ).setDepth(202);
+              this.tweens.add({
+                targets: circ,
+                alpha: 0,
+                scale: 1.2,
+                duration: 700 + i * 30,
+                delay: i * 30,
+                onComplete: () => circ.destroy()
+              });
+            }
+          } else if (extraParticles === 'code') {
+            const codeBits = ['if', 'else', '&&', '||', '!', '{', '}', '==', '!=', '>=', '<='];
+            for (let i = 0; i < 10; i++) {
+              const code = this.add.text(
+                this.cameras.main.width / 2 + Phaser.Math.Between(-80, 80),
+                this.cameras.main.height / 2 + 60 + Phaser.Math.Between(-10, 30),
+                Phaser.Utils.Array.GetRandom(codeBits),
+                {
+                  fontFamily: 'monospace',
+                  fontSize: '20px',
+                  color: '#00fff7',
+                  stroke: '#fff',
+                  strokeThickness: 2
+                }
+              ).setOrigin(0.5).setDepth(202);
+              this.tweens.add({
+                targets: code,
+                y: code.y - Phaser.Math.Between(30, 60),
+                alpha: 0,
+                duration: 900,
+                delay: i * 40,
+                onComplete: () => code.destroy()
+              });
+            }
+          } else {
+            // Estrelas padrão
+            for (let i = 0; i < 16; i++) {
+              const star = this.add.star(
+                this.cameras.main.width / 2 + Phaser.Math.Between(-200, 200),
+                this.cameras.main.height / 2 + Phaser.Math.Between(-40, 40),
+                5, 2, 8, confettiColor
+              ).setAlpha(0.7).setDepth(202);
+              this.tweens.add({
+                targets: star,
+                alpha: 0,
+                y: star.y - Phaser.Math.Between(10, 40),
+                duration: 800,
+                delay: i * 30,
+                onComplete: () => star.destroy()
+              });
+            }
+          }
+
+          // Fica visível por 1.5s (ou infinito se final)
+          if (!isFinal) {
+            this.time.delayedCall(1500, () => {
+              // Fade out
+              this.tweens.add({
+                targets: [messageText, bg, emojiText].filter(Boolean),
+                alpha: 0,
+                duration: 400,
+                onComplete: () => {
+                  messageText.destroy();
+                  bg.destroy();
+                  if (emojiText) emojiText.destroy();
+                }
+              });
+            });
+          }
         }
       }
       
