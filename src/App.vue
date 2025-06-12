@@ -1,17 +1,10 @@
 <template>
-  <div id="app">
-    <PhaserVueMinimo />
-  </div>
+  <router-view />
 </template>
 
 <script>
-import PhaserVueMinimo from './components/phaser-vue-ajustado.vue'
-
 export default {
-  name: 'App',
-  components: {
-    PhaserVueMinimo
-  }
+  name: 'App'
 }
 </script>
 
@@ -22,6 +15,5 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 20px;
 }
 </style>
