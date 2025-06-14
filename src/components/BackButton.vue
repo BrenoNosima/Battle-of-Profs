@@ -45,8 +45,8 @@ const goBack = () => {
 }
 
 .retro-back-btn:hover {
-  background: #ffe066;
-  color: #222;
+  background: #5ae8ec;
+  color: #012643;
   text-shadow: none;
 }
 

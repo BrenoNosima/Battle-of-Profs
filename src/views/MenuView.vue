@@ -6,7 +6,7 @@
   <!-- Container principal que aplica a imagem de fundo e centraliza o conteúdo -->
   <!-- A classe `bg-pattern` vem do src/index.css e precisa ter o caminho da imagem ajustado -->
   <!-- Vamos definir o background diretamente aqui para melhor controle no Vue -->
-  <div class="min-h-screen flex flex-col items-center justify-center bg-pattern p-4"
+  <div class="h-screen flex flex-col items-center justify-center bg-pattern p-4"
        :style="{ backgroundImage: `url(${backgroundImageUrl})` }">
 
     <!-- Logo do Jogo -->
@@ -18,7 +18,7 @@
       <ul id="main-menu" class="space-y-4 w-full">
         <!-- Botão JOGAR -->
         <!-- @click chama o método handlePlayClick -->
-        <li @click="handlePlayClick" class="menu-item p-4 bg-retro-menu-item-bg pixel-border text-center rounded cursor-pointer hover:bg-retro-yellow hover:text-black transition-colors duration-200">
+        <li @click="handlePlayClick" class="menu-item p-4 bg-retro-menu-item-bg pixel-border text-center rounded cursor-pointer transition-colors duration-200">
           JOGAR
         </li>
 
@@ -27,7 +27,7 @@
         <!-- O `to="/credits"` aponta para a rota definida em src/router/index.js -->
         <li>
           <router-link to="/credits"
-            class="menu-item block p-4 bg-retro-menu-item-bg pixel-border text-center rounded cursor-pointer hover:bg-retro-yellow hover:text-black transition-colors duration-200">
+            class="menu-item block p-4 bg-retro-menu-item-bg pixel-border text-center rounded cursor-pointer transition-colors duration-200">
             CRÉDITOS
           </router-link>
         </li>
@@ -52,11 +52,11 @@ import LoadingBar from '@/components/LoadingBar.vue';
 
 // Importa as imagens estáticas usando a sintaxe do Vite
 // Isso garante que as imagens sejam processadas corretamente pelo build
-import logoPath from '@/assets/img/Logo do Professor Stryke.png';
+import logoPath from '@/assets/img/ChatGPT Image 13 de jun. de 2025, 22_10_03.png';
 // O nome do arquivo de fundo tem caracteres especiais, vamos usar o nome correto
 // Renomear o arquivo seria uma boa prática para evitar problemas.
 // Assumindo que o arquivo foi copiado corretamente para src/assets/img/
-import backgroundPath from '@/assets/img/ChatGPT Image 15 de mai. de 2025, 10_05_41.png';
+import backgroundPath from '@/assets/img/ChatGPT Image 13 de jun. de 2025, 21_23_22.png';
 
 // Variáveis reativas para controlar o estado da UI
 const isLoading = ref(false); // Controla a visibilidade do menu vs. barra de carregamento
@@ -91,10 +91,11 @@ const handlePlayClick = () => {
 
 /* Estilos adaptados do index.html original */
 .logo-jogo {
-  width: 320px;
+  width: 400px;
   max-width: 90vw; /* Garante responsividade */
   height: auto;
   display: block;
+  margin-top: 50px;
   margin-left: auto;
   margin-right: auto;
   /* Adiciona position relative para garantir que fique acima do ::before do bg-pattern */
@@ -103,18 +104,17 @@ const handlePlayClick = () => {
 }
 
 .menu-box {
-  background: theme('colors.retro-menu-bg'); /* Usando cor do tema Tailwind */
+  background-color: #012643;
   border-radius: 16px;
   padding: 40px 24px;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
-  border: 4px solid #fff;
-  /* max-width é definido pelas classes Tailwind (max-w-md etc.) */
-  /* width: 100%; */ /* Já definido pela classe w-full */
+  border: 4px solid white;
   margin-left: auto; /* Centraliza */
   margin-right: auto; /* Centraliza */
   /* Garante que fique acima do ::before do bg-pattern */
   position: relative;
   z-index: 1;
+  margin-bottom: 100px;
 }
 
 .menu-item {
@@ -130,6 +130,14 @@ const handlePlayClick = () => {
   color: white;
   /* cursor: pointer; */ /* Definido nas classes Tailwind */
   font-family: 'Press Start 2P', cursive, sans-serif;
+  text-shadow: 2px 2px 0 #000;
+  text-decoration: none;
+}
+.menu-item:hover {
+  background-color: #5ae8ec !important;
+  color: #012643 !important;
+  transition: background 0.2s, color 0.2s;
+  text-shadow: none;
 }
 
 /* O hover é tratado pelas classes hover: do Tailwind */
@@ -172,11 +180,13 @@ const handlePlayClick = () => {
 /* Pseudo-elemento para a sobreposição escura (copiado do index.css global, mas pode ser específico se necessário) */
 .bg-pattern::before {
   content: "";
-  position: absolute; /* Usar absolute em vez de fixed para ficar contido no div */
+  position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 0; /* Atrás do conteúdo */
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 0;
   pointer-events: none;
+  backdrop-filter: blur(3px); /* <-- Adiciona o efeito de blur */
+  -webkit-backdrop-filter: blur(3px); /* Suporte para Safari */
 }
 
 /* Garante que o conteúdo direto (logo, menu-box) fique acima do ::before */

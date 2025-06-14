@@ -7,11 +7,11 @@
   <!-- A classe 'credits-section' vem do CSS global (src/index.css) para scroll snap -->
   <div class="credits-section section flex flex-col md:flex-row" :class="{ reverse: reverseLayout }" ref="profileSection">
     <!-- Coluna de Informações (Nome, Botões Sociais) -->
-    <div class="info flex-1 flex flex-col justify-center items-center p-6 md:p-10 text-center bg-retro-brown">
+    <div class="info flex-1 flex flex-col justify-center items-center p-6 md:p-10 text-center">
       <!-- Título (Nome) com efeito de máquina de escrever -->
       <!-- O span interno é o alvo da animação -->
       <h1 class="mb-6 md:mb-8">
-        <span class="typewriter-target font-press-start text-2xl sm:text-3xl md:text-4xl text-retro-title-brown whitespace-pre-line leading-tight block" :style="{ textShadow: '2px 2px 0 #000, 4px 4px 0 #333, 0 0 8px #000' }">
+        <span class="typewriter-target font-press-start text-2xl sm:text-3xl md:text-4xl whitespace-pre-line leading-tight block" :style="{ textShadow: '2px 2px 0 #000, 4px 4px 0 #333, 0 0 8px #000' }">
           <!-- O texto será preenchido pela função typewriter -->
         </span>
       </h1>
@@ -164,9 +164,24 @@ onUnmounted(() => {
 }
 
 .btn-social:hover {
-  background: theme('colors.retro-yellow');
-  color: #222;
+  background-color: #5ae8ec;
+  color: #012643;
   text-shadow: none;
+}
+
+.info{
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 0rem;
+  /* Fundo infinito com a imagem */
+  background-image: url('@/assets/img/ChatGPT Image 13 de jun. de 2025, 23_42_06.png');
+  background-position: center;
 }
 
 /* Ajustes responsivos */
@@ -198,18 +213,6 @@ onUnmounted(() => {
    .info h1 span {
     font-size: 1.5rem;
   }
-}
-
-.info {
-  flex: 1 1 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
-  padding: 0rem;
 }
 </style>
 
