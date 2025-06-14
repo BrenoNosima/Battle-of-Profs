@@ -1,172 +1,365 @@
 import Phaser from 'phaser';
 
+/**
+ * Classe base para todos os inimigos do jogo
+ * @extends Phaser.Physics.Arcade.Sprite
+ */
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y, texture) {
+    /**
+     * Cria uma nova instância de inimigo
+     * @param {Phaser.Scene} scene - Cena Phaser onde o inimigo será adicionado
+     * @param {number} x - Posição horizontal inicial
+     * @param {number} y - Posição vertical inicial
+     * @param {string} texture - Chave da textura do sprite
+     * @param {Object} [config] - Configurações opcionais para o inimigo
+     * @param {string} [config.animPrefix='enemy'] - Prefixo para as animações
+     * @param {number} [config.health=350] - Vida máxima do inimigo
+     * @param {number} [config.speed=450] - Velocidade de movimento
+     * @param {number} [config.attackDamage=10] - Dano do ataque
+     */
+    constructor(scene, x, y, texture, config = {}) {
         super(scene, x, y, texture);
 
-        this.scene = scene;
+        // ======================
+        // CONFIGURAÇÃO INICIAL
+        // ======================
+        
+        // Adiciona à cena e física
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        this.health = 350;
+        // ======================
+        // CONFIGURAÇÕES PADRÃO
+        // ======================
+        
+        // Prefixo para animações (pode ser sobrescrito)
+        this.animPrefix = config.animPrefix || 'enemy';
+        
+        // Sistema de vida
+        this.maxHealth = config.health || 350;
+        this.health = this.maxHealth;
+        
+        // Sistema de combate
         this.attackCooldown = false;
-        this.speed = 450; // Slower speed for the enemy
-        this.attackRange = 80; // Range to initiate attack
-        this.pursuitRange = 1000; // Range to start chasing
-        this.attackDamage = 10;
-
-        this.setScale(0.7);
+        this.attackDamage = config.attackDamage || 10;
+        this.attackRange = 80;
+        this.attackCooldownTime = 1200;
+        
+        // Movimentação
+        this.speed = config.speed || 450;
+        this.pursuitRange = 1000;
+        this.jumpPower = -900;
+        this.gravity = 2000;
+        
+        // ======================
+        // CONFIGURAÇÃO FÍSICA
+        // ======================
+        
+        this.setScale(1);
         this.setCollideWorldBounds(true);
         this.setBounce(0.1);
-        this.setSize(60, 200); // Adjust hitbox
-        this.setOffset(70,10); // Adjust offset
-        this.setTint(0x00ffff); // Distinguishing color
-
-        console.log("Enemy: Entidade criada");
+        this.setSize(60, 140);
+        this.setOffset(47, 15);
+        this.setGravityY(this.gravity);
+        
+        // ======================
+        // APARÊNCIA
+        // ======================
+        
+        this.baseTint = 0x00ffff; // Cor base (cian)
+        this.setTint(this.baseTint);
     }
 
-    update(player) { // Receive player reference for AI
-        if (this.scene.roundOver || this.attackCooldown || this.health <= 0) {
-            // Stop moving if round is over, attacking, or defeated
-            if (this.body.velocity.x !== 0) this.setVelocityX(0);
-            // Ensure idle animation if not attacking
-            if (!this.attackCooldown && this.anims.currentAnim?.key !== 'enemy-idle' && this.anims.currentAnim?.key !== 'enemy-attack') {
-                this.play('enemy-idle', true);
-            }
+    // ======================
+    // MÉTODOS PRINCIPAIS
+    // ======================
+
+    /**
+     * Atualiza o estado do inimigo a cada frame
+     * @param {Phaser.Physics.Arcade.Sprite} player - Referência ao jogador
+     */
+    update(player) {
+        if (this.shouldSkipUpdate()) {
+            this.handleInactiveState();
             return;
         }
 
-        const distance = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
-
+        const distance = this.calculateDistanceTo(player);
+        this.updateDirection(player);
         
-
-        // Update direction based on player position
-        if (player.x < this.x) {
-            this.flipX = true;
-        } else {
-            this.flipX = false;
-        }
-
-        if (distance < 200 && Phaser.Math.Between(0, 1000) < 5) {
+        if (this.shouldJump(distance)) {
             this.jump();
         }
 
-        // AI Behavior
+        this.handleAIBehavior(player, distance);
+        this.updateAirAnimation();
+    }
+
+    /**
+     * Lógica principal de IA
+     * @param {Phaser.Physics.Arcade.Sprite} player 
+     * @param {number} distance 
+     */
+    handleAIBehavior(player, distance) {
         if (distance < this.attackRange) {
-            // Close enough to attack
-            this.setVelocityX(0); // Stop moving to attack
-            if (!this.attackCooldown) {
-                this.attack(player);
-            }
-             // Play idle animation if not attacking (attack method handles attack anim)
-             else if (this.anims.currentAnim?.key !== 'enemy-attack') {
-                 this.play('enemy-idle', true);
-             }
-
+            this.handleAttackBehavior(player);
         } else if (distance < this.pursuitRange) {
-            // Within pursuit range, move towards player
-            const direction = (player.x < this.x) ? -1 : 1;
-            this.setVelocityX(this.speed * direction);
-            if (this.anims.currentAnim?.key !== 'enemy-walk') {
-                 this.play('enemy-walk', true);
-            }
+            this.handlePursuitBehavior(player);
         } else {
-            // Too far, stand idle
-            this.setVelocityX(0);
-             if (this.anims.currentAnim?.key !== 'enemy-idle') {
-                 this.play('enemy-idle', true);
-            }
-        }
-        if (!this.body.onFloor() && this.anims.currentAnim?.key !== 'enemy-jump') {
-            this.play('enemy-jump', true);
+            this.handleIdleBehavior();
         }
     }
 
+
+    /**
+     * Executa um ataque contra o jogador
+     * @param {Phaser.Physics.Arcade.Sprite} player - Alvo do ataque
+     */
     attack(player) {
-        if (this.attackCooldown || this.scene.roundOver || this.health <= 0) return;
+        if (this.cannotAttack()) return;
 
-        console.log("Enemy: Atacando");
-        this.attackCooldown = true;
-        this.play('enemy-attack', true);
+        this.startAttack();
+        this.play(`${this.animPrefix}-attack`, true);
 
-        // Check distance again just before dealing damage
-        const distance = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
-
-        if (distance < this.attackRange + 20) { // Slightly larger check range for attack hit
-            // Call scene method to damage player
-            this.scene.damagePlayer(this.attackDamage);
-
-            // Apply knockback to player
-            const angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
-            player.setVelocity(
-                Math.cos(angle) * 300,
-                Math.sin(angle) * 150 - 100 // Add slight upward impulse
-            );
+        if (this.isPlayerInAttackRange(player)) {
+            this.applyAttackEffects(player);
         }
 
-        // Create visual effect
         this.createAttackEffect();
-
-        // Cooldown timers
-        this.scene.time.delayedCall(500, () => { // Duration of attack animation/action
-            // Can return to idle/walk animation after this, handled by update
-        });
-
-        this.scene.time.delayedCall(1200, () => { // Total cooldown period
-            this.attackCooldown = false;
-            console.log("Enemy: Cooldown de ataque finalizado");
-        });
+        this.startAttackCooldown();
     }
 
+    /**
+     * Aplica dano ao inimigo
+     * @param {number} amount - Quantidade de dano
+     */
+    takeDamage(amount) {
+        if (this.isDefeated()) return;
+
+        this.health = Phaser.Math.Clamp(this.health - amount, 0, this.maxHealth);
+        this.showDamageFeedback();
+    }
+
+    // ======================
+    // MÉTODOS AUXILIARES
+    // ======================
+
+    /**
+     * Verifica se o update deve ser ignorado
+     * @returns {boolean}
+     */
+    shouldSkipUpdate() {
+        return this.scene.roundOver || this.attackCooldown || this.health <= 0;
+    }
+
+    /**
+     * Calcula distância para o jogador
+     * @param {Phaser.Physics.Arcade.Sprite} player 
+     * @returns {number}
+     */
+    calculateDistanceTo(player) {
+        return Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
+    }
+
+    /**
+     * Atualiza direção do sprite baseado na posição do jogador
+     * @param {Phaser.Physics.Arcade.Sprite} player 
+     */
+    updateDirection(player) {
+        this.flipX = player.x < this.x;
+    }
+
+    /**
+     * Verifica se deve pular
+     * @param {number} distance 
+     * @returns {boolean}
+     */
+    shouldJump(distance) {
+        return distance < 200 && Phaser.Math.Between(0, 1000) < 5;
+    }
+
+    /**
+     * Lida com o estado inativo
+     */
+    handleInactiveState() {
+        if (this.body.velocity.x !== 0) {
+            this.setVelocityX(0);
+        }
+        
+        if (!this.attackCooldown && 
+            !this.isPlayingAnimation(`${this.animPrefix}-idle`) && 
+            !this.isPlayingAnimation(`${this.animPrefix}-attack`)) {
+            this.play(`${this.animPrefix}-idle`, true);
+        }
+    }
+
+    /**
+     * Atualiza animação quando no ar
+     */
+    updateAirAnimation() {
+        if (!this.body.onFloor() && !this.isPlayingAnimation(`${this.animPrefix}-jump`)) {
+            this.play(`${this.animPrefix}-jump`, true);
+        }
+    }
+
+
+    /**
+     * Comportamento de ataque
+     * @param {Phaser.Physics.Arcade.Sprite} player 
+     */
+    handleAttackBehavior(player) {
+        this.setVelocityX(0);
+        
+        if (!this.attackCooldown) {
+            this.attack(player);
+        } else if (!this.isPlayingAnimation(`${this.animPrefix}-attack`)) {
+            this.play(`${this.animPrefix}-idle`, true);
+        }
+    }
+
+    /**
+     * Comportamento de perseguição
+     * @param {Phaser.Physics.Arcade.Sprite} player 
+     */
+    handlePursuitBehavior(player) {
+        const direction = player.x < this.x ? -1 : 1;
+        this.setVelocityX(this.speed * direction);
+        
+        if (!this.isPlayingAnimation(`${this.animPrefix}-walk`)) {
+            this.play(`${this.animPrefix}-walk`, true);
+        }
+    }
+
+    /**
+     * Comportamento idle
+     */
+    handleIdleBehavior() {
+        this.setVelocityX(0);
+        if (!this.isPlayingAnimation(`${this.animPrefix}-idle`)) {
+            this.play(`${this.animPrefix}-idle`, true);
+        }
+    }
+
+    /**
+     * Verifica se está reproduzindo uma animação específica
+     * @param {string} animKey 
+     * @returns {boolean}
+     */
+    isPlayingAnimation(animKey) {
+        return this.anims.currentAnim?.key === animKey;
+    }
+
+    /**
+     * Verifica se pode atacar
+     * @returns {boolean}
+     */
+    cannotAttack() {
+        return this.attackCooldown || this.scene.roundOver || this.health <= 0;
+    }
+
+    /**
+     * Inicia o ataque
+     */
+    startAttack() {
+        this.attackCooldown = true;
+    }
+
+    /**
+     * Verifica se jogador está no alcance
+     * @param {Phaser.Physics.Arcade.Sprite} player 
+     * @returns {boolean}
+     */
+    isPlayerInAttackRange(player) {
+        return this.calculateDistanceTo(player) < this.attackRange + 20;
+    }
+
+    /**
+     * Aplica efeitos do ataque
+     * @param {Phaser.Physics.Arcade.Sprite} player 
+     */
+    applyAttackEffects(player) {
+        this.scene.damagePlayer(this.attackDamage);
+        
+        const angle = Phaser.Math.Angle.Between(this.x, this.y, player.x, player.y);
+        player.setVelocity(
+            Math.cos(angle) * 300,
+            Math.sin(angle) * 150 - 100
+        );
+    }
+
+    /**
+     * Cria efeito visual de ataque
+     */
     createAttackEffect() {
         const attackDirection = this.flipX ? -1 : 1;
-        const effectX = this.x + (attackDirection * 60);
-        const effectY = this.y - 30;
-
-        const attackEffect = this.scene.add.circle(effectX, effectY, 15, 0x00ffff, 0.7);
-        attackEffect.setDepth(5);
+        const effect = this.scene.add.circle(
+            this.x + (attackDirection * 60),
+            this.y - 30,
+            15,
+            0x00ffff,
+            0.7
+        ).setDepth(5);
 
         this.scene.tweens.add({
-            targets: attackEffect,
+            targets: effect,
             scale: { from: 0.5, to: 2.5 },
             alpha: { from: 0.8, to: 0 },
             duration: 300,
             ease: 'Power2',
-            onComplete: () => {
-                attackEffect.destroy();
-            }
+            onComplete: () => effect.destroy()
         });
     }
 
-    takeDamage(amount) {
-        if (this.health <= 0) return; // Already defeated
+    /**
+     * Inicia cooldown do ataque
+     */
+    startAttackCooldown() {
+        this.scene.time.delayedCall(this.attackCooldownTime, () => {
+            this.attackCooldown = false;
+        });
+    }
 
-        this.health -= amount;
-        if (this.health < 0) {
-            this.health = 0;
-        }
-        console.log(`Enemy: Recebeu ${amount} de dano. Vida: ${this.health}`);
-
-        // Visual effect
-        this.setTintFill(0xff0000); // Flash red
+    /**
+     * Mostra feedback visual de dano
+     */
+    showDamageFeedback() {
+        this.setTintFill(0xff0000);
         this.scene.time.delayedCall(150, () => {
             this.clearTint();
-            this.setTint(0x00ffff); // Reapply original tint
+            this.setTint(this.baseTint);
         });
-
-        // Stop current attack if damaged
-        // if (this.attackCooldown) {
-        //     this.attackCooldown = false; // Allow interruption? Optional.
-        // }
-
-        // Death logic is checked in the scene (checkRoundEnd)
     }
 
+    /**
+     * Verifica se está derrotado
+     * @returns {boolean}
+     */
+    isDefeated() {
+        return this.health <= 0;
+    }
+
+    /**
+     * Reseta a vida do inimigo
+     */
+    resetHealth() {
+        this.health = this.maxHealth;
+    }
+
+    /**
+     * Executa um pulo
+     */
     jump() {
         if (this.body.onFloor()) {
-            this.setVelocityY(-900); // Ajustar altura do salto
-            console.log("Enemy: Saltando");
-            this.setGravityY(2000); // Aumenta a gravidade para cair mais rápido
+            this.setVelocityY(this.jumpPower);
         }
+    }
+    reset(x, y, health) {
+        this.setPosition(x, y);
+        if (health !== undefined) this.health = health;
+        this.setVelocity(0, 0);
+        this.attackCooldown = false;
+        this.clearTint();
+        this.setTint(this.baseTint);
+        this.play(`${this.animPrefix}-idle`, true);
     }
 }
