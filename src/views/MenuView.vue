@@ -13,12 +13,16 @@
     <!-- Usamos :src para vincular dinamicamente a imagem importada -->
     <img :src="logoUrl" alt="Logo do Professor Stryke" class="logo-jogo mb-4 md:mb-8">
 
-    <!-- Caixa do Menu Principal (visível quando não está carregando) -->
-    <div v-if="!isLoading" class="menu-box w-full max-w-md md:max-w-lg lg:max-w-xl" id="menu-box">
+    <!-- Caixa do Menu Principal (visível quando showVideo é false) -->
+    <div v-if="!showVideo" class="menu-box w-full max-w-md md:max-w-lg lg:max-w-xl" id="menu-box">
       <ul id="main-menu" class="space-y-4 w-full">
         <!-- Botão JOGAR -->
         <!-- @click chama o método handlePlayClick -->
-        <li @click="handlePlayClick" class="menu-item p-4 bg-retro-menu-item-bg pixel-border text-center rounded cursor-pointer transition-colors duration-200">
+        <li
+          @click="handlePlayClick"
+          @mouseenter="playHoverSound"
+          class="menu-item p-4 bg-retro-menu-item-bg pixel-border text-center rounded cursor-pointer transition-colors duration-200"
+        >
           JOGAR
         </li>
 
@@ -26,19 +30,32 @@
         <!-- Usamos <router-link> para navegação interna do Vue Router -->
         <!-- O `to="/credits"` aponta para a rota definida em src/router/index.js -->
         <li>
-          <router-link to="/credits"
-            class="menu-item block p-4 bg-retro-menu-item-bg pixel-border text-center rounded cursor-pointer transition-colors duration-200">
+          <router-link
+            to="/credits"
+            class="menu-item block p-4 bg-retro-menu-item-bg pixel-border text-center rounded cursor-pointer transition-colors duration-200"
+            @mouseenter="playHoverSound"
+          >
             CRÉDITOS
           </router-link>
         </li>
       </ul>
     </div>
 
-    <!-- Área da Barra de Carregamento (visível quando isLoading é true) -->
-    <!-- Usamos o componente LoadingBar que criamos -->
-    <!-- Passamos a propriedade :progress para controlar o preenchimento da barra -->
-    <LoadingBar v-else :progress="loadingProgress" id="loading-bar-area" />
-
+    <!-- Vídeo de introdução aparece só depois de clicar em JOGAR -->
+    <!-- Novo bloco: Mostra o vídeo quando showVideo for true -->
+    <div v-else class="intro-video-container">
+      <video
+        ref="introVideo"
+        src="@/assets/video_intro.mp4" 
+        class="intro-video"
+        autoplay
+        controls
+        playsinline
+        @ended="goToGame"
+      ></video>
+      <!-- Botão para pular o vídeo -->
+      <button class="skip-btn" @click="goToGame">Pular vídeo</button>
+    </div>
   </div>
 </template>
 
@@ -46,9 +63,6 @@
 // Importações necessárias do Vue e outros módulos
 import { ref } from 'vue'; // ref é usado para criar variáveis reativas
 import { useRouter } from 'vue-router'; // useRouter para navegação programática (se necessário)
-
-// Importa o componente LoadingBar
-import LoadingBar from '@/components/LoadingBar.vue';
 
 // Importa as imagens estáticas usando a sintaxe do Vite
 // Isso garante que as imagens sejam processadas corretamente pelo build
@@ -58,9 +72,8 @@ import logoPath from '@/assets/img/ChatGPT Image 13 de jun. de 2025, 22_10_03.pn
 // Assumindo que o arquivo foi copiado corretamente para src/assets/img/
 import backgroundPath from '@/assets/img/ChatGPT Image 13 de jun. de 2025, 21_23_22.png';
 
-// Variáveis reativas para controlar o estado da UI
-const isLoading = ref(false); // Controla a visibilidade do menu vs. barra de carregamento
-const loadingProgress = ref(0); // Controla a porcentagem da barra de carregamento (0-100)
+// Variável reativa para controlar se o vídeo está sendo exibido
+const showVideo = ref(false);
 
 // Obtém a instância do roteador (não estritamente necessário aqui, mas útil se precisarmos de navegação programática)
 const router = useRouter();
@@ -71,16 +84,26 @@ const backgroundImageUrl = ref(backgroundPath);
 
 // Função chamada quando o botão "JOGAR" é clicado
 const handlePlayClick = () => {
-  isLoading.value = true;
-  loadingProgress.value = 0;
-  setTimeout(() => {
-    loadingProgress.value = 100;
-  }, 50);
-  setTimeout(() => {
-    router.push('/game'); // <-- Troca para navegação real
-  }, 700);
+  // Ao clicar em jogar, mostra o vídeo de introdução
+  showVideo.value = true;
 };
 
+// Função chamada quando o vídeo termina ou o usuário clica em "Pular vídeo"
+function goToGame() {
+  router.push('/game');
+}
+
+// --- NOVO: Lógica para o áudio de hover ---
+import hoverSoundUrl from '@/assets/sounds/houver.mp3';
+
+// Cria o objeto de áudio
+const hoverAudio = new Audio(hoverSoundUrl);
+
+// Função para tocar o áudio ao passar o mouse
+function playHoverSound() {
+  hoverAudio.currentTime = 0;
+  hoverAudio.play();
+}
 </script>
 
 <style scoped>
@@ -191,10 +214,52 @@ const handlePlayClick = () => {
 
 /* Garante que o conteúdo direto (logo, menu-box) fique acima do ::before */
 .logo-jogo,
-.menu-box,
-#loading-bar-area {
+.menu-box {
   position: relative;
   z-index: 1;
+}
+
+/* --- NOVO: Estilos para o vídeo de introdução --- */
+.intro-video-container {
+  position: fixed; /* Garante que cobre toda a tela */
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.95);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.intro-video {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover; /* Faz o vídeo cobrir toda a tela */
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.skip-btn {
+  position: fixed;
+  right: 40px;
+  bottom: 40px;
+  margin: 0;
+  padding: 16px 36px;
+  font-family: 'Press Start 2P', cursive, sans-serif;
+  background: #5ae8ec;
+  color: #012643;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 2px 2px 0 #000;
+  transition: background 0.2s, color 0.2s;
+  z-index: 101;
+}
+.skip-btn:hover {
+  background: #012643;
+  color: #5ae8ec;
 }
 </style>
 
