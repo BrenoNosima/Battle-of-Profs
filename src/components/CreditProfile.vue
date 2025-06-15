@@ -70,6 +70,7 @@ const typewriterTarget = ref(null);
 const hasTyped = ref(false);
 let observer = null;
 
+// Cria o objeto de áudio fora da função para evitar múltiplas instâncias
 const hoverAudio = new Audio(hoverSoundUrl);
 
 function playHoverSound() {
