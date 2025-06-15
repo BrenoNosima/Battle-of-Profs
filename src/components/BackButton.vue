@@ -5,6 +5,7 @@
   <button
     class="retro-back-btn"
     @click="goBack"
+    @mouseover="playHoverSound"
   >
     Voltar
   </button>
@@ -13,15 +14,23 @@
 <script setup>
 // Importa o useRouter para acessar a instância do roteador.
 import { useRouter } from 'vue-router';
+import hoverSoundUrl from '@/assets/sounds/houver.mp3';
 
 // Obtém a instância do roteador.
 const router = useRouter();
+
+const hoverAudio = new Audio(hoverSoundUrl);
 
 // Função para navegar para a página anterior no histórico do navegador.
 const goBack = () => {
   // router.back() é equivalente a window.history.back()
   router.back();
 };
+
+function playHoverSound() {
+  hoverAudio.currentTime = 0;
+  hoverAudio.play();
+}
 </script>
 
 <style scoped>

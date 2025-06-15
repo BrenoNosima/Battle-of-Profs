@@ -18,10 +18,20 @@
 
       <!-- Botões de Redes Sociais -->
       <div class="flex flex-col items-center space-y-4">
-        <a :href="profile.githubUrl" target="_blank" class="btn-social">
+        <a
+          :href="profile.githubUrl"
+          target="_blank"
+          class="btn-social"
+          @mouseenter="playHoverSound"
+        >
           GitHub
         </a>
-        <a :href="profile.linkedinUrl" target="_blank" class="btn-social">
+        <a
+          :href="profile.linkedinUrl"
+          target="_blank"
+          class="btn-social"
+          @mouseenter="playHoverSound"
+        >
           LinkedIn
         </a>
       </div>
@@ -38,6 +48,7 @@
 <script setup>
 // Importações do Vue
 import { defineProps, ref, onMounted, onUnmounted } from 'vue';
+import hoverSoundUrl from '@/assets/sounds/houver.mp3';
 
 // Define as props que o componente espera receber do pai (CreditsView)
 const props = defineProps({
@@ -58,6 +69,13 @@ const typewriterTarget = ref(null);
 // Estado para controlar se a animação já foi executada
 const hasTyped = ref(false);
 let observer = null;
+
+const hoverAudio = new Audio(hoverSoundUrl);
+
+function playHoverSound() {
+  hoverAudio.currentTime = 0;
+  hoverAudio.play();
+}
 
 // Função para simular o efeito de máquina de escrever
 const typewriter = (element, text, delay = 75) => {
