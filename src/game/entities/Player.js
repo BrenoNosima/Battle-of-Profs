@@ -22,10 +22,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.body.setGravityY(2000);
         this.body.setCollideWorldBounds(true);
         this.body.setBounce(0.1);
-        this.body.setSize(60, 200); // Ajuste para valor menor que a sprite
+        this.body.setSize(60, 100); // Ajuste para valor menor que a sprite
         this.body.setOffset(40, 70);
 
-        this.setScale(0.9);
+        this.setScale(1.5);
 
 
         console.log("Player: Entidade criada");
