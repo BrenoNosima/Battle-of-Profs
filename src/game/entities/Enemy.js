@@ -55,11 +55,11 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         // CONFIGURAÇÃO FÍSICA
         // ======================
         
-        this.setScale(1);
+        this.setScale(1.5);
         this.setCollideWorldBounds(true);
         this.setBounce(0.1);
-        this.setSize(60, 140);
-        this.setOffset(47, 15);
+        this.setSize(60, 100);
+        this.setOffset(40, 70);
         this.setGravityY(this.gravity);
         
         // ======================

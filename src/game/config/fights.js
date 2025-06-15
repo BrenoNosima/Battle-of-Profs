@@ -14,18 +14,18 @@ export default [
         player: 'Player', // Classe do jogador (Player.js)
         enemy: 'Moreno', // Classe do inimigo (Moreno.js)
         playerSprites: {
-            idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 125, frames: 1 },
-            walk: { path: '/sprite/player/playerAndando.png', frameWidth: 66.5, frameHeight: 116, frames: 5 },
-            attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 116, frames: 4 },
-            block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 126, frames: 1 },
-            jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 115, frames: 1 },
+            idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 110, frames: 1 },
+            walk: { path: '/sprite/player/playerAndando.png', frameWidth: 66.5, frameHeight: 110, frames: 5 },
+            attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 110, frames: 4 },
+            block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 115, frames: 1 },
+            jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 110, frames: 1 },
             dash: { path: '/sprite/player/playerDash.png', frameWidth: 162, frameHeight: 90, frames: 1 } // NOVO!
         },
         enemySprites: {
-            idle: {path: '/sprite/moreno/morenoParado.png', frameWidth: 80, frameHeight: 100, frames: 1},
+            idle: {path: '/sprite/moreno/morenoParado.png', frameWidth: 80, frameHeight: 110, frames: 1},
             walk: {path: '/sprite/moreno/morenoAndando.png', frameWidth: 70, frameHeight: 110, frames: 4},
-            attack: {path: '/sprite/moreno/morenoAtaque.png',frameWidth: 86.25, frameHeight: 120, frames: 4},
-            special: {path: '/sprite/moreno/morenoAtaqueEspecial.png',frameWidth: 102.5, frameHeight: 100, frames: 4},
+            attack: {path: '/sprite/moreno/morenoAtaque.png',frameWidth: 86.25, frameHeight: 110, frames: 4},
+            special: {path: '/sprite/moreno/morenoAtaqueEspecial.png',frameWidth: 190, frameHeight: 110, frames: 4},
             jump: {path: '/sprite/moreno/morenoPulando.png', frameWidth: 80, frameHeight: 110, frames: 1},
         }
     },
@@ -35,11 +35,11 @@ export default [
         player: 'Player', 
         enemy: 'Cidao',
         playerSprites: {
-            idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 125, frames: 1 },
-            walk: { path: '/sprite/player/playerAndando.png', frameWidth: 70, frameHeight: 116, frames: 5 },
-            attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 116, frames: 4 },
-            block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 126, frames: 1 },
-            jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 115, frames: 1 },
+            idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 110, frames: 1 },
+            walk: { path: '/sprite/player/playerAndando.png', frameWidth: 66.5, frameHeight: 110, frames: 5 },
+            attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 110, frames: 4 },
+            block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 115, frames: 1 },
+            jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 110, frames: 1 },
             dash: { path: '/sprite/player/playerDash.png', frameWidth: 162, frameHeight: 90, frames: 1 } // NOVO!
         },
         enemySprites: {
@@ -56,11 +56,11 @@ export default [
         player: 'Player',
         enemy: 'Hugo',
         playerSprites: {
-            idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 125, frames: 1 },
-            walk: { path: '/sprite/player/playerAndando.png', frameWidth: 70, frameHeight: 116, frames: 5 },
-            attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 116, frames: 4 },
-            block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 126, frames: 1 },
-            jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 115, frames: 1 },
+            idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 110, frames: 1 },
+            walk: { path: '/sprite/player/playerAndando.png', frameWidth: 66.5, frameHeight: 110, frames: 5 },
+            attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 110, frames: 4 },
+            block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 115, frames: 1 },
+            jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 110, frames: 1 },
             dash: { path: '/sprite/player/playerDash.png', frameWidth: 162, frameHeight: 90, frames: 1 } // NOVO!
         },
         enemySprites: {
