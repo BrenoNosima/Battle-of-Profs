@@ -178,7 +178,7 @@ export default class FightScene extends Phaser.Scene {
         gainNode.gain.value = 1; // Restaura o volume
       }, { once: true });
     } catch (error) {
-      console.warn('Erro ao inicializar AudioContext:', error);
+      console.warn('Erro ao inicializar AudioContextfffffff:', error);
     }
     
     if (!this.vueComponent) {
@@ -303,7 +303,7 @@ export default class FightScene extends Phaser.Scene {
 
     // Verifica se está aguardando avanço de fase
     if (this.awaitingPhaseAdvance) {
-      if (this.keys.phaseAdvance.isDown) {  // Alterado de special para phaseAdvance
+      if (this.keys.special.isDown) {
         this.awaitingPhaseAdvance = false;
         this.advanceToNextPhase();
       }
@@ -352,15 +352,7 @@ export default class FightScene extends Phaser.Scene {
       block: Phaser.Input.Keyboard.KeyCodes[this.controls.block],
       attack: Phaser.Input.Keyboard.KeyCodes[this.controls.attack],
       special: Phaser.Input.Keyboard.KeyCodes[this.controls.special],
-      dash: Phaser.Input.Keyboard.KeyCodes[this.controls.dash],
-      phaseAdvance: Phaser.Input.Keyboard.KeyCodes.P // Nova tecla dedicada
-    });
-
-    // Adiciona listener direto para a tecla P como fallback
-    this.input.keyboard.on('keydown-P', () => {
-      if (this.awaitingPhaseAdvance && !this.showingPhaseTransition) {
-        this.advanceToNextPhase();
-      }
+      dash: Phaser.Input.Keyboard.KeyCodes[this.controls.dash]
     });
   }
 
@@ -669,22 +661,15 @@ export default class FightScene extends Phaser.Scene {
       if (!isLastPhase) {
         // Player venceu a fase, mas não é a última
         await this.showPhaseVictoryScreen();
-        
-        // Mostra cutscene apenas entre fase 2 e 3
-        if (this.currentPhase === 2) {
-          await this.startCutscene();
-        }
-        
-        // Aguarda confirmação para avançar
-        await this.showPhaseAdvancePrompt();
-        await this.advanceToNextPhase();
       } else {
-        // Player venceu a última fase
+        // Player venceu a última fase - vitória total
         await this.victoryScreen();
       }
     } else if (enemyWonPhase) {
+      // Player perdeu a fase
       await this.gameOverScreen();
     } else {
+      // Continua na mesma fase (próximo round)
       await this.nextRound();
     }
   }
@@ -713,7 +698,7 @@ export default class FightScene extends Phaser.Scene {
   }
 
   async showPhaseAdvancePrompt() {
-    // Cria overlay
+    // Cria overlay para a mensagem
     const overlay = this.add.rectangle(
       this.cameras.main.width / 2,
       this.cameras.main.height / 2,
@@ -741,7 +726,7 @@ export default class FightScene extends Phaser.Scene {
     const instructionText = this.add.text(
       this.cameras.main.width / 2,
       this.cameras.main.height / 2 + 50,
-      'Aperte [P] para continuar',
+      'Aperte [E] para ir para a próxima fase',
       {
         fontSize: '24px',
         fill: '#4CAF50',
@@ -751,7 +736,7 @@ export default class FightScene extends Phaser.Scene {
       }
     ).setOrigin(0.5).setDepth(26);
 
-    // Animação do texto
+    // Anima o texto de instrução
     this.tweens.add({
       targets: instructionText,
       alpha: { from: 1, to: 0.5 },
@@ -760,21 +745,8 @@ export default class FightScene extends Phaser.Scene {
       repeat: -1
     });
 
-    // Cria uma promise que será resolvida quando P for pressionado
-    return new Promise(resolve => {
-      const onKeyDown = () => {
-        if (this.awaitingPhaseAdvance) {
-          this.input.keyboard.off('keydown-P', onKeyDown);
-          overlay.destroy();
-          mainText.destroy();
-          instructionText.destroy();
-          resolve();
-        }
-      };
-
-      this.input.keyboard.on('keydown-P', onKeyDown);
-      this.awaitingPhaseAdvance = true;
-    });
+    // Ativa flag para aguardar tecla E
+    this.awaitingPhaseAdvance = true;
   }
 
   async advanceToNextPhase() {
@@ -786,24 +758,8 @@ export default class FightScene extends Phaser.Scene {
       // Executa transição visual
       await this.executePhaseTransition();
       
-      // Prepara os dados para a próxima fase
-      const nextPhaseIndex = this.fightIndex + 1;
-      
-      // Verifica se existe uma próxima fase
-      if (nextPhaseIndex >= this.scene.manager.keys.length) {
-        console.log("Não há mais fases disponíveis");
-        this.vueComponent?.showVictoryScreen();
-        return;
-      }
-      
-      // Reinicia a cena com os novos parâmetros
-      this.scene.restart({
-        vueComponentRef: this.vueComponent,
-        fightIndex: nextPhaseIndex,
-        currentRound: 1,  // Reseta o round
-        playerWins: 0,    // Reseta as vitórias
-        enemyWins: 0      // Reseta as vitórias
-      });
+      // Carrega próxima fase
+      await this.loadPhase(this.currentPhase + 1);
       
     } catch (error) {
       console.error('Erro ao avançar fase:', error);
