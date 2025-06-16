@@ -484,22 +484,6 @@ export default class RoundTransition {
         resolve(true);
       });
       
-      this.scene.input.keyboard.once('keydown-ESC', () => {
-        // Solução direta: redirecionar para a página inicial/menu (mesma lógica do botão NÃO)
-        window.location.href = '/';
-        
-        // Limpar recursos antes de sair
-        if (this.scene.game) {
-          // Tenta destruir a cena atual para liberar recursos
-          try {
-            this.scene.game.destroy(true);
-          } catch (e) {
-            console.log("Erro ao destruir o jogo:", e);
-          }
-        }
-        
-        resolve(false);
-      });
     });
   }
 }

@@ -1,60 +1,27 @@
 import Phaser from 'phaser';
 
-/**
- * Classe base para todos os inimigos do jogo
- * @extends Phaser.Physics.Arcade.Sprite
- */
 export default class Enemy extends Phaser.Physics.Arcade.Sprite {
-    /**
-     * Cria uma nova instância de inimigo
-     * @param {Phaser.Scene} scene - Cena Phaser onde o inimigo será adicionado
-     * @param {number} x - Posição horizontal inicial
-     * @param {number} y - Posição vertical inicial
-     * @param {string} texture - Chave da textura do sprite
-     * @param {Object} [config] - Configurações opcionais para o inimigo
-     * @param {string} [config.animPrefix='enemy'] - Prefixo para as animações
-     * @param {number} [config.health=350] - Vida máxima do inimigo
-     * @param {number} [config.speed=450] - Velocidade de movimento
-     * @param {number} [config.attackDamage=10] - Dano do ataque
-     */
     constructor(scene, x, y, texture, config = {}) {
         super(scene, x, y, texture);
 
-        // ======================
-        // CONFIGURAÇÃO INICIAL
-        // ======================
-        
-        // Adiciona à cena e física
+        // Configuração inicial
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
-        // ======================
-        // CONFIGURAÇÕES PADRÃO
-        // ======================
-        
-        // Prefixo para animações (pode ser sobrescrito)
+        // Configurações padrão
         this.animPrefix = config.animPrefix || 'enemy';
-        
-        // Sistema de vida
         this.maxHealth = config.health || 350;
         this.health = this.maxHealth;
-        
-        // Sistema de combate
         this.attackCooldown = false;
         this.attackDamage = config.attackDamage || 10;
         this.attackRange = 80;
         this.attackCooldownTime = 1200;
-        
-        // Movimentação
         this.speed = config.speed || 450;
         this.pursuitRange = 1000;
         this.jumpPower = -900;
         this.gravity = 2000;
-        
-        // ======================
-        // CONFIGURAÇÃO FÍSICA
-        // ======================
-        
+
+        // Configuração física (ATUALIZADO)
         this.setScale(1.5);
         this.setCollideWorldBounds(true);
         this.setBounce(0.1);
@@ -62,17 +29,27 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.setOffset(40, 70);
         this.setGravityY(this.gravity);
         
-        // ======================
-        // APARÊNCIA
-        // ======================
+        // DESABILITA COLISÃO PELO TOPO (SOLUÇÃO PRINCIPAL)
+        this.body.checkCollision.up = false;
         
-        this.baseTint = 0x00ffff; // Cor base (cian)
+        // Mantém outras colisões ativas
+        this.body.checkCollision.down = true;
+        this.body.checkCollision.left = true;
+        this.body.checkCollision.right = true;
+
+        // Aparência
+        this.baseTint = 0x00ffff;
         this.setTint(this.baseTint);
     }
 
-    // ======================
-    // MÉTODOS PRINCIPAIS
-    // ======================
+    // Método simplificado já que a colisão superior está desativada
+    handleVerticalOverlap(player) {
+        // Apenas um pequeno empurrão lateral como fallback
+        if (this.y < player.y && Math.abs(this.x - player.x) < this.body.width * 0.8) {
+            const direction = this.x < player.x ? -1 : 1;
+            this.setVelocityX(direction * 200);
+        }
+    }
 
     /**
      * Atualiza o estado do inimigo a cada frame
@@ -86,7 +63,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
         const distance = this.calculateDistanceTo(player);
         this.updateDirection(player);
-        
+    
         if (this.shouldJump(distance)) {
             this.jump();
         }
