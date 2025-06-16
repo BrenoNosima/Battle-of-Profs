@@ -80,5 +80,14 @@ export default [
             speed: 160,
             attackDamage: 12
         }
+    },
+    {
+        name: "Fase Final: Parabéns!",
+        background: 'parabens.png', // coloque uma imagem de fundo comemorativa
+        player: null,
+        enemy: null,
+        playerSprites: null,
+        enemySprites: null,
+        enemyConfig: null
     }
 ];

@@ -145,12 +145,12 @@ export default class RoundTransition {
       };
       
       // Adiciona as linhas de controle
-      createLine(-160, 'W', 'Pular');
-      createLine(-120, 'A', 'Mover Esquerda');
-      createLine(-80, 'D', 'Mover Direita');
-      createLine(-40, 'ESPAÇO', 'Atacar');
-      createLine(0, 'SHIFT', 'Bloquear');
-      createLine(40, 'X', 'Dash');
+      createLine(-160, 'W', ' Pular');
+      createLine(-120, 'A', ' Mover Esquerda');
+      createLine(-80, 'D', ' Mover Direita');
+      createLine(-40, 'ESPAÇO', ' Atacar');
+      createLine(0, 'SHIFT', ' Dash');
+      createLine(40, 'F', ' Bloquear');
       
       // Adiciona texto para continuar
       const continueText = this.scene.add.text(
