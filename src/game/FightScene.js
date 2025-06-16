@@ -124,7 +124,7 @@ export default class FightScene extends Phaser.Scene {
     loadSprite('player-jump', this.currentFight.playerSprites.jump);
     loadSprite('player-dash', this.currentFight.playerSprites.dash);
 
-    // 4. Carrega sprites do inimigo com chaves únicas baseadas no nome do inimigo
+    // 4. Carrega sprites do inimigo com chaves únicas baseadas no nome do inimig
     const enemyName = this.currentFight.enemy.toLowerCase();
     loadSprite(`${enemyName}-idle`, this.currentFight.enemySprites.idle);
     loadSprite(`${enemyName}-walk`, this.currentFight.enemySprites.walk);
@@ -178,6 +178,7 @@ export default class FightScene extends Phaser.Scene {
             unlockAudio();
         }
     };
+
 
     // Verificações iniciais
     if (!this.vueComponent) {
