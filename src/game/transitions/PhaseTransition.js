@@ -42,28 +42,27 @@ export default class PhaseTransition {
   /**
    * Fade out da tela atual
    */
-  async fadeOut() {
+ async fadeOut() {
     return new Promise(resolve => {
-      // Cria overlay preto
-      this.overlay = this.scene.add.rectangle(
-        this.scene.cameras.main.width / 2,
-        this.scene.cameras.main.height / 2,
-        this.scene.cameras.main.width,
-        this.scene.cameras.main.height,
-        0x000000,
-        0
-      ).setDepth(50);
+        // Substitui o retângulo preto pela imagem de transição
+        this.overlay = this.scene.add.image(
+            this.scene.cameras.main.width / 2,
+            this.scene.cameras.main.height / 2,
+            'transition-bg' // Chave da imagem carregada
+        )
+        .setDisplaySize(this.scene.cameras.main.width, this.scene.cameras.main.height)
+        .setDepth(50)
+        .setAlpha(0);
 
-      // Anima fade out
-      this.scene.tweens.add({
-        targets: this.overlay,
-        alpha: 1,
-        duration: 1000,
-        ease: 'Power2',
-        onComplete: resolve
-      });
+        this.scene.tweens.add({
+            targets: this.overlay,
+            alpha: 1,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: resolve
+        });
     });
-  }
+}
 
   /**
    * Mostra texto de transição entre fases
@@ -114,26 +113,33 @@ export default class PhaseTransition {
    */
   async changeBackground(newBackgroundKey) {
     return new Promise(resolve => {
-      // Remove background atual
-      if (this.scene.background) {
-        this.scene.background.destroy();
-      }
+        // Verifica se a textura existe
+        if (!this.scene.textures.exists(newBackgroundKey)) {
+            console.error(`Background ${newBackgroundKey} não encontrado!`);
+            resolve();
+            return;
+        }
 
-      // Cria novo background
-      this.scene.background = this.scene.add.image(0, 0, newBackgroundKey)
-        .setOrigin(0)
-        .setDisplaySize(this.scene.cameras.main.width, this.scene.cameras.main.height)
-        .setDepth(-1)
-        .setAlpha(0);
+        // Remove background atual
+        if (this.scene.background) {
+            this.scene.background.destroy();
+        }
 
-      // Fade in do novo background
-      this.scene.tweens.add({
-        targets: this.scene.background,
-        alpha: 1,
-        duration: 1000,
-        ease: 'Power2',
-        onComplete: resolve
-      });
+        // Cria novo background
+        this.scene.background = this.scene.add.image(0, 0, newBackgroundKey)
+            .setOrigin(0)
+            .setDisplaySize(this.scene.cameras.main.width, this.scene.cameras.main.height)
+            .setDepth(-1)
+            .setAlpha(0);
+
+        // Fade in do novo background
+        this.scene.tweens.add({
+            targets: this.scene.background,
+            alpha: 1,
+            duration: 1000,
+            ease: 'Power2',
+            onComplete: resolve
+        });
     });
   }
 
@@ -261,6 +267,57 @@ export default class PhaseTransition {
       this.overlay = null;
     }
     this.isTransitioning = false;
+  }
+
+  async showPhaseTransition(fromPhase, toPhase, newBackgroundKey) {
+    return new Promise(resolve => {
+        // Troca o background imediatamente
+        if (this.scene.background) {
+            this.scene.background.destroy();
+        }
+        
+        this.scene.background = this.scene.add.image(0, 0, newBackgroundKey)
+            .setOrigin(0)
+            .setDisplaySize(this.scene.cameras.main.width, this.scene.cameras.main.height)
+            .setDepth(-1);
+
+        // Cria texto da transição
+        const phaseText = this.scene.add.text(
+            this.scene.cameras.main.width / 2,
+            this.scene.cameras.main.height / 2,
+            `FASE ${toPhase}`,
+            {
+                fontSize: '72px',
+                fill: '#ffffff',
+                stroke: '#000000',
+                strokeThickness: 6,
+                fontFamily: 'Arial',
+                fontStyle: 'bold'
+            }
+        ).setOrigin(0.5).setDepth(51);
+
+        // Animação do texto (aparece e some)
+        this.scene.tweens.add({
+            targets: phaseText,
+            scale: { from: 0.5, to: 1.2 },
+            alpha: { from: 0, to: 1 },
+            duration: 500,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                this.scene.time.delayedCall(1000, () => {
+                    this.scene.tweens.add({
+                        targets: phaseText,
+                        alpha: 0,
+                        duration: 300,
+                        onComplete: () => {
+                            phaseText.destroy();
+                            resolve();
+                        }
+                    });
+                });
+            }
+        });
+    });
   }
 }
 

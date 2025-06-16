@@ -58,37 +58,42 @@ export default class FightScene extends Phaser.Scene {
     };
     this.roundTransition = null;
     
-    // Novas propriedades para sistema de fases
-    this.phaseWins = 0; // Vitórias de fase do jogador
-    this.currentPhase = 1; // Fase atual (1, 2, 3)
-    this.totalPhases = 3; // Total de fases
-    this.showingPhaseTransition = false; // Flag para evitar múltiplas transições
-    this.awaitingPhaseAdvance = false; // Flag para aguardar tecla E
-    this.phaseTransition = null; // Nova instância para transições de fase
-    this.cutsceneManager = null; // Gerenciador de cutscenes
+    // Propriedades para sistema de fases
+    this.phaseWins = 0;
+    this.currentPhase = 1;
+    this.totalPhases = 3;
+    this.showingPhaseTransition = false;
+    this.phaseTransition = null;
+    this.cutsceneManager = null;
   }
 
   init(data) {
     if (data?.vueComponentRef) {
-      this.vueComponent = data.vueComponentRef;
-      this.currentRound = this.vueComponent.currentRound || 1;
-      this.playerWins = this.vueComponent.playerWins || 0;
-      this.enemyWins = this.vueComponent.enemyWins || 0;
+        this.vueComponent = data.vueComponentRef;
+        // Sincroniza os valores iniciais
+        this.currentRound = this.vueComponent.currentRound = data.currentRound || 1;
+        this.playerWins = this.vueComponent.playerWins = data.playerWins || 0;
+        this.enemyWins = this.vueComponent.enemyWins = data.enemyWins || 0;
+    } else {
+        this.currentRound = 1;
+        this.playerWins = 0;
+        this.enemyWins = 0;
     }
     
-    // Determina a fase baseada no fightIndex ou dados passados
     this.fightIndex = data?.fightIndex || 0;
     this.currentPhase = this.fightIndex + 1;
     this.currentFight = fights[this.fightIndex];
     
     if (!this.currentFight) {
-      console.error('Luta atual não definida!');
-      this.scene.start('MenuScene');
-      return;
+        console.error('Luta atual não definida!');
+        this.scene.start('MenuScene');
+        return;
     }
     
     console.log(`Iniciando Fase ${this.currentPhase}: ${this.currentFight.name}`);
   }
+
+
 
   preload() {
     const loadSprite = (key, config) => {
@@ -103,7 +108,15 @@ export default class FightScene extends Phaser.Scene {
       });
     };
 
-    // Carrega sprites do jogador
+    // 1. Primeiro carrega TODOS os backgrounds das fases antecipadamente
+    fights.forEach((fight, index) => {
+        this.load.image(`bg-phase-${index+1}`, `backgrounds/${fight.background}`);
+    });
+
+    // 2. Carrega a imagem de transição
+    this.load.image('transition-bg', 'backgrounds/transition-bg.png');
+
+    // 3. Carrega sprites do jogador
     loadSprite('player-idle', this.currentFight.playerSprites.idle);
     loadSprite('player-walk', this.currentFight.playerSprites.walk);
     loadSprite('player-attack', this.currentFight.playerSprites.attack);
@@ -111,204 +124,181 @@ export default class FightScene extends Phaser.Scene {
     loadSprite('player-jump', this.currentFight.playerSprites.jump);
     loadSprite('player-dash', this.currentFight.playerSprites.dash);
 
-    // Carrega sprites do inimigo
-    loadSprite('enemy-idle', this.currentFight.enemySprites.idle);
-    loadSprite('enemy-walk', this.currentFight.enemySprites.walk);
-    loadSprite('enemy-attack', this.currentFight.enemySprites.attack);
-    loadSprite('enemy-special', this.currentFight.enemySprites.special);
-    loadSprite('enemy-jump', this.currentFight.enemySprites.jump);
-
-    // Carrega background
-    if (this.currentFight.background) {
-      this.load.image('fight-bg', `/backgrounds/${this.currentFight.background}`);
-    } else {
-      console.error('Background não definido para a luta atual');
-    }
+    // 4. Carrega sprites do inimigo com chaves únicas baseadas no nome do inimig
+    const enemyName = this.currentFight.enemy.toLowerCase();
+    loadSprite(`${enemyName}-idle`, this.currentFight.enemySprites.idle);
+    loadSprite(`${enemyName}-walk`, this.currentFight.enemySprites.walk);
+    loadSprite(`${enemyName}-attack`, this.currentFight.enemySprites.attack);
+    loadSprite(`${enemyName}-special`, this.currentFight.enemySprites.special);
+    loadSprite(`${enemyName}-jump`, this.currentFight.enemySprites.jump);
     
-    // Sons
+    // 5. Sons
     this.load.audio('punch', '/sounds/soco.mp3');
     this.load.audio('jump', '/sounds/jump.mp3');
     this.load.audio('block', '/sounds/block.mp3');
     this.load.audio('dash', '/sounds/dash.mp3');
-  }
+
+    // Remove os carregamentos duplicados de background que estavam aqui antes
+}
 
   async create() {
-    // Solução para problemas de AudioContext
+    // Configuração do AudioContext
     const handleAudioContext = () => {
-        // 1. Tenta destravar o AudioContext existente do Phaser
-        if (this.sound.context.state === 'suspended') {
-            this.sound.context.resume();
+        if (!this.sound || !this.sound.context) {
+            console.warn('Sistema de áudio não disponível');
+            return;
         }
-        
-        // 2. Adiciona listener para interação do usuário
+
         const unlockAudio = () => {
             document.removeEventListener('click', unlockAudio);
             document.removeEventListener('touchstart', unlockAudio);
             
-            if (this.sound.context.state === 'suspended') {
-                this.sound.context.resume();
+            try {
+                if (this.sound.context.state === 'suspended') {
+                    this.sound.context.resume().then(() => {
+                        console.log('Áudio desbloqueado');
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao retomar áudio:', error);
             }
         };
-        
+
         document.addEventListener('click', unlockAudio);
         document.addEventListener('touchstart', unlockAudio);
+
+        if (this.game.hasUserInteraction) {
+            unlockAudio();
+        }
     };
 
-    handleAudioContext();
-    console.log('Iniciando criação da cena...');
-    
-    // Solução para problemas de AudioContext
-    try {
-      // Tenta criar um contexto de áudio vazio para destravar o autoplay policy
-      const context = new (window.AudioContext || window.webkitAudioContext)();
-      if (context.state === 'suspended') {
-        await context.resume();
-      }
-      
-      // Cria um nó de ganho para evitar problemas
-      const gainNode = context.createGain();
-      gainNode.gain.value = 0; // Começa com volume zero
-      gainNode.connect(context.destination);
-      
-      // Força o navegador a reconhecer a interação do usuário
-      document.addEventListener('click', () => {
-        if (context.state === 'suspended') {
-          context.resume();
-        }
-        gainNode.gain.value = 1; // Restaura o volume
-      }, { once: true });
-    } catch (error) {
-      console.warn('Erro ao inicializar AudioContextfffffff:', error);
-    }
-    
+
+    // Verificações iniciais
     if (!this.vueComponent) {
-      this.showError("Erro: Componente Vue não encontrado!");
-      return;
+        this.showError("Erro: Componente Vue não encontrado!");
+        return;
     }
 
     if (!this.currentFight) {
-      this.showError("Erro: Luta atual não configurada!");
-      return;
+        this.showError("Erro: Luta atual não configurada!");
+        return;
     }
 
-    // Configuração da cena
-    this.background = this.add.image(0, 0, 'fight-bg')
-      .setOrigin(0)
-      .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
-      .setDepth(-1);
+    // Configuração do background usando o sistema de pré-carregamento
+    const bgKey = `bg-phase-${this.fightIndex+1}`;
+    
+    if (this.textures.exists(bgKey)) {
+        this.background = this.add.image(0, 0, bgKey)
+            .setOrigin(0)
+            .setDisplaySize(this.cameras.main.width, this.cameras.main.height)
+            .setDepth(-1);
+    } else {
+        console.error(`Background "${bgKey}" não encontrado!`);
+        // Fallback - fundo cinza
+        this.background = this.add.rectangle(0, 0, 
+            this.cameras.main.width, 
+            this.cameras.main.height, 
+            0x333333)
+            .setOrigin(0)
+            .setDepth(-1);
+    }
 
     // Configuração física
     this.physics.world.setBounds(0, 0, this.cameras.main.width, this.cameras.main.height);
-    
-    // Cria o chão primeiro
     this.createGround();
 
-    // Criação de personagens
+    // Criação dos personagens
     const groundY = this.cameras.main.height * 0.85;
-    const playerAltura = 155;
-    const pisoY = groundY - (playerAltura / 2);
-
-    // Verifica classes disponíveis
-    console.log('Classes disponíveis:', characterClasses);
+    const pisoY = groundY - (155 / 2);
     
-    // Cria jogador
+    // Player
     const PlayerClass = characterClasses[this.currentFight.player];
     if (!PlayerClass) {
-      console.error('Classe do jogador não encontrada:', this.currentFight.player);
-      return;
+        console.error('Classe do jogador não encontrada:', this.currentFight.player);
+        return;
     }
+    this.player = new PlayerClass(this, this.cameras.main.width * 0.3, pisoY, 'player-idle');
     
-    this.player = new PlayerClass(
-      this, 
-      this.cameras.main.width * 0.3, 
-      pisoY,
-      'player-idle'
-    );
-    
-    if (!this.player) {
-      console.error('Falha ao criar jogador');
-      return;
-    }
-
-    // Cria inimigo
+    // Inimigo
+    const enemyName = this.currentFight.enemy.toLowerCase();
     const EnemyClass = characterClasses[this.currentFight.enemy];
     if (!EnemyClass) {
-      console.error('Classe do inimigo não encontrada:', this.currentFight.enemy);
-      return;
+        console.error('Classe do inimigo não encontrada:', this.currentFight.enemy);
+        return;
     }
-    
-    this.enemy = new EnemyClass(
-      this,
-      this.cameras.main.width * 0.7,
-      pisoY,
-      'enemy-idle'
-    );
-    
-    if (!this.enemy) {
-      console.error('Falha ao criar inimigo');
-      return;
-    }
+    this.enemy = new EnemyClass(this, this.cameras.main.width * 0.7, pisoY, `${enemyName}-idle`);
 
-    // Configura colisões
+    // Configurações básicas
     this.setupCollisions();
-
-    // Cria animações
     this.createAnimations();
-    
-    if (this.player.play) {
-      this.player.play('player-idle');
-    }
-    
-    if (this.enemy.play) {
-      this.enemy.play('enemy-idle');
-    }
-    
+    if (this.player.play) this.player.play('player-idle');
+    if (this.enemy.play) this.enemy.play(`${enemyName}-idle`);
     this.setupControls();
     this.createHealthBars();
     this.createRoundDots();
-    
-    // Inicializa transição de round
+
+    // Inicializa transições
     this.roundTransition = new RoundTransition(this);
-    if (!this.roundTransition) {
-      console.error('Falha ao criar RoundTransition');
-      return;
-    }
-    
-    // Inicializa transição de fase
     this.phaseTransition = new PhaseTransition(this);
-    if (!this.phaseTransition) {
-      console.error('Falha ao criar PhaseTransition');
-      return;
-    }
-    
-    // Inicializa gerenciador de cutscenes
-    this.cutsceneManager = new CutsceneManager(this);
-    if (!this.cutsceneManager) {
-      console.error('Falha ao criar CutsceneManager');
-      return;
+
+    // Configuração das teclas (em create())
+    this.input.keyboard.on('keydown', (event) => {
+      if (this.roundOver && !this.showingPhaseTransition) {
+        switch (event.key.toUpperCase()) {
+          case 'R': // Reiniciar fase atual
+            this.scene.restart({
+              fightIndex: this.fightIndex,
+              vueComponentRef: this.vueComponent
+            });
+          break;
+                    
+          case 'B': // Voltar para fase anterior
+            if (this.fightIndex > 0) {
+              this.scene.start('FightScene', {
+                fightIndex: this.fightIndex - 1,
+                vueComponentRef: this.vueComponent,
+                currentRound: 1,
+                playerWins: 0,
+                enemyWins: 0
+              });
+            } else {
+              this.scene.start('MenuScene');
+            }
+          break;
+        }
+      }
+    });
+
+    // Inicialização do CutsceneManager
+    try {
+        this.cutsceneManager = new CutsceneManager(this);
+        if (!this.cutsceneManager || 
+            typeof this.cutsceneManager.showVictoryCutscene !== 'function' ||
+            typeof this.cutsceneManager.showDefeatCutscene !== 'function') {
+            throw new Error('CutsceneManager inválido');
+        }
+    } catch (error) {
+        console.error('Falha ao inicializar CutsceneManager:', error);
+        this.cutsceneManager = {
+            showVictoryCutscene: async () => {
+                await new Promise(resolve => this.time.delayedCall(2000, resolve));
+            },
+            showDefeatCutscene: async () => {
+                await new Promise(resolve => this.time.delayedCall(2000, resolve));
+            }
+        };
     }
     
     this.resetFightState();
     
-    // Mostra instruções iniciais
+    // Instruções iniciais
     if (this.currentRound === 1 && !this.controlsShown) {
-      await this.showInitialInstructions();
+        await this.showInitialInstructions();
     }
-    
-    console.log('Cena criada com sucesso!');
   }
 
   update() {
     if (this.roundOver || this.showingPhaseTransition) return;
-
-    // Verifica se está aguardando avanço de fase
-    if (this.awaitingPhaseAdvance) {
-      if (this.keys.special.isDown) {
-        this.awaitingPhaseAdvance = false;
-        this.advanceToNextPhase();
-      }
-      return;
-    }
 
     try {
       if (this.player && typeof this.player.update === 'function') {
@@ -340,8 +330,6 @@ export default class FightScene extends Phaser.Scene {
     ground.setScale(this.cameras.main.width / ground.width, 1)
       .refreshBody()
       .setAlpha(0);
-      
-    console.log('Chão criado na posição Y:', groundY);
   }
 
   setupControls() {
@@ -357,95 +345,95 @@ export default class FightScene extends Phaser.Scene {
   }
 
   setupCollisions() {
-      if (!this.ground || !this.player || !this.enemy) {
-          console.error('Objetos necessários para colisão não criados!');
-          return;
-      }
+    if (!this.ground || !this.player || !this.enemy) {
+        console.error('Objetos necessários para colisão não criados!');
+        return;
+    }
 
-      // Colisão com o chão
-      this.physics.add.collider(this.player, this.ground);
-      this.physics.add.collider(this.enemy, this.ground);
+    // Colisão com o chão (mantém padrão)
+    this.physics.add.collider(this.player, this.ground);
+    this.physics.add.collider(this.enemy, this.ground);
 
-      // Colisão apenas horizontal entre personagens
-      this.physics.add.collider(
-      this.player,
-      this.enemy,
-      null,
-      (player, enemy) => {
-          // Só colide se o player NÃO estiver acima do inimigo
-          // Ou seja, se o player está caindo sobre o inimigo, não colide
-          const verticalThreshold = 10; // ajuste fino se necessário
-          if (
-              player.body.velocity.y > 0 && // está caindo
-              player.body.bottom <= enemy.body.top + verticalThreshold
-          ) {
-              return false; // não colide, deixa atravessar
-          }
-          return true; // colide normalmente
-      }
-  );
+    // Substitui o collider player-enemy por um overlap condicional
+    this.physics.add.overlap(
+        this.player,
+        this.enemy,
+        (player, enemy) => {
+            // Se o player está vindo de cima (caindo no inimigo)
+            if (player.body.velocity.y > 0 && player.y < enemy.y) {
+                // Permite atravessar (ignora colisão)
+                return;
+            }
+
+            // Se for colisão lateral ou por baixo, aplica um pequeno empurrão
+            const direction = player.x < enemy.x ? -1 : 1;
+            player.setVelocityX(direction * 100);
+            enemy.setVelocityX(-direction * 100);
+        }
+    );
   }
 
   createHealthBars() {
-    // Container para organização
     const healthBarsContainer = this.add.container(0, 20).setDepth(10);
     
     // Barra do jogador (verde)
     this.healthBars.player = new HealthBar(
-      this,
-      this.cameras.main.width * 0.25,
-      0,
-      200,
-      20,
-      0x4CAF50, // Verde
-      0x333333  // Borda
+        this,
+        this.cameras.main.width * 0.25,
+        0,
+        300, // Largura reduzida
+        25,
+        0x4CAF50, // Verde
+        true // É o player
     );
     
-    // Barra do inimigo (vermelho)
+    // Barra do inimigo (vermelha)
     this.healthBars.enemy = new HealthBar(
-      this,
-      this.cameras.main.width * 0.75,
-      0,
-      200,
-      20,
-      0xF44336, // Vermelho
-      0x333333  // Borda
+        this,
+        this.cameras.main.width * 0.75,
+        0,
+        300, // Largura reduzida
+        25,
+        0xF44336, // Vermelho
+        false // É o inimigo
     );
     
-    healthBarsContainer.add([
-      ...this.healthBars.player.getGraphics(),
-      ...this.healthBars.enemy.getGraphics()
-    ]);
-        
-    // Texto "VS" central
-    this.add.text(
-      this.cameras.main.width / 2,
-      30,
-      'VS',
-      {
-        fontSize: '90px',
-        fontFamily: 'Arial',
-        color: '#FFFFFF',
-        stroke: '#000000',
-        strokeThickness: 5,
-        shadow: { offsetX: 2, offsetY: 2, color: '#000', blur: 2 }
-      }
+    // Adiciona texto "VS" no centro
+    const vsText = this.add.text(
+        this.cameras.main.width / 2,
+        0,
+        'VS',
+        {
+            fontSize: '48px',
+            fontFamily: 'Arial',
+            color: '#FFFFFF',
+            stroke: '#000000',
+            strokeThickness: 5,
+            shadow: { offsetX: 2, offsetY: 2, color: '#000', blur: 2 }
+        }
     ).setOrigin(0.5).setDepth(11);
 
-    // Adiciona indicador de fase
-    this.add.text(
-      this.cameras.main.width / 2,
-      80,
-      `FASE ${this.currentPhase}`,
-      {
-        fontSize: '24px',
-        fontFamily: 'Arial',
-        color: '#FFFFFF',
-        stroke: '#000000',
-        strokeThickness: 3,
-        shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 1 }
-      }
+    // Adiciona texto da fase
+    const phaseText = this.add.text(
+        this.cameras.main.width / 2,
+        40,
+        `FASE ${this.currentPhase}`,
+        {
+            fontSize: '24px',
+            fontFamily: 'Arial',
+            color: '#FFFFFF',
+            stroke: '#000000',
+            strokeThickness: 3,
+            shadow: { offsetX: 1, offsetY: 1, color: '#000', blur: 1 }
+        }
     ).setOrigin(0.5).setDepth(11);
+
+    healthBarsContainer.add([
+        ...this.healthBars.player.getGraphics(),
+        ...this.healthBars.enemy.getGraphics(),
+        vsText,
+        phaseText
+    ]);
   }
 
   createRoundDots() {
@@ -454,7 +442,6 @@ export default class FightScene extends Phaser.Scene {
     const startX = this.cameras.main.width * 0.1 - spacing;
     const yPos = 60;
     
-    // Pontos do jogador
     for (let i = 0; i < 2; i++) {
       const dot = this.add.circle(
         startX + (i * spacing * 2),
@@ -462,11 +449,9 @@ export default class FightScene extends Phaser.Scene {
         dotSize,
         i < this.playerWins ? 0x4CAF50 : 0x888888
       ).setStrokeStyle(2, 0x333333);
-      
       this.roundDots.player.push(dot);
     }
     
-    // Pontos do inimigo
     for (let i = 0; i < 2; i++) {
       const dot = this.add.circle(
         this.cameras.main.width * 0.9 + (i * spacing * 2),
@@ -474,7 +459,6 @@ export default class FightScene extends Phaser.Scene {
         dotSize,
         i < this.enemyWins ? 0xF44336 : 0x888888
       ).setStrokeStyle(2, 0x333333);
-      
       this.roundDots.enemy.push(dot);
     }
   }
@@ -502,13 +486,13 @@ export default class FightScene extends Phaser.Scene {
     createAnim('player-jump', 'player-jump', { start: 0, end: 0 });
     createAnim('player-dash', 'player-dash', { start: 0, end: 0 }, 15, 0);
 
-    // Animações do inimigo
-    const prefix = this.enemy.animPrefix;
-    createAnim(`${prefix}-idle`, 'enemy-idle', { start: 0, end: 0 });
-    createAnim(`${prefix}-walk`, 'enemy-walk', { start: 0, end: this.currentFight.enemySprites.walk.frames - 1 });
-    createAnim(`${prefix}-attack`, 'enemy-attack', { start: 0, end: this.currentFight.enemySprites.attack.frames - 1 }, 15, 0);
-    createAnim(`${prefix}-special`, 'enemy-special', { start: 0, end: this.currentFight.enemySprites.special.frames - 1 }, 15, 0);
-    createAnim(`${prefix}-jump`, 'enemy-jump', { start: 0, end: 0 });
+    // Animações do inimigo com chaves únicas
+    const enemyName = this.currentFight.enemy.toLowerCase();
+    createAnim(`${enemyName}-idle`, `${enemyName}-idle`, { start: 0, end: 0 });
+    createAnim(`${enemyName}-walk`, `${enemyName}-walk`, { start: 0, end: this.currentFight.enemySprites.walk.frames - 1 });
+    createAnim(`${enemyName}-attack`, `${enemyName}-attack`, { start: 0, end: this.currentFight.enemySprites.attack.frames - 1 }, 15, 0);
+    createAnim(`${enemyName}-special`, `${enemyName}-special`, { start: 0, end: this.currentFight.enemySprites.special.frames - 1 }, 15, 0);
+    createAnim(`${enemyName}-jump`, `${enemyName}-jump`, { start: 0, end: 0 });
   }
 
   resetFightState() {
@@ -572,13 +556,11 @@ export default class FightScene extends Phaser.Scene {
   }
 
   checkAttacks() {
-    // Jogador atacando
     if (this.player?.isAttacking && this.checkHit(this.player, this.enemy)) {
       this.enemy.takeDamage(10);
       this.sound.play('punch');
     }
     
-    // Inimigo atacando
     if (this.enemy?.isAttacking && this.checkHit(this.enemy, this.player)) {
       this.player.takeDamage(8);
       this.sound.play('punch');
@@ -594,27 +576,16 @@ export default class FightScene extends Phaser.Scene {
     );
   }
 
-  handleCharacterCollision(player, enemy) {
-    if (!player?.body || !enemy?.body) return true;
-    
-    const verticalThreshold = 15;
-    if (player.body.velocity.y > 0 && 
-        player.body.bottom <= enemy.body.top + verticalThreshold) {
-      return false;
-    }
-    return true;
-  }
-
   async checkRoundEnd() {
     if (this.roundOver || !this.roundTransition || this.showingPhaseTransition) return;
     
     let winner = null;
     if (this.enemy && this.enemy.health <= 0) {
-      winner = 'player';
-      this.playerWins++;
+        winner = 'player';
+        this.playerWins++;
     } else if (this.player && this.player.health <= 0) {
-      winner = 'enemy';
-      this.enemyWins++;
+        winner = 'enemy';
+        this.enemyWins++;
     }
     
     if (!winner) return;
@@ -623,523 +594,201 @@ export default class FightScene extends Phaser.Scene {
     this.updateRoundDots();
     
     if (this.vueComponent) {
-      this.vueComponent.updateRoundInfo(
-        this.currentRound,
-        this.playerWins,
-        this.enemyWins
-      );
+        this.vueComponent.updateRoundInfo(
+            this.currentRound,
+            this.playerWins,
+            this.enemyWins
+        );
     }
     
     try {
-      await this.roundTransition.show(
-        winner === 'player' ? 'Você venceu!' : 'Você perdeu!'
-      );
-      await this.handleFightOutcome();
+        // Verificação adicional antes de usar roundTransition
+        if (this.roundTransition && typeof this.roundTransition.show === 'function') {
+            await this.roundTransition.show(
+                winner === 'player' ? 'Você venceu!' : 'Você perdeu!'
+            );
+        }
+        await this.handleFightOutcome();
     } catch (error) {
-      console.error('Erro na transição de round:', error);
+        console.error('Erro na transição de round:', error);
+        this.scene.restart();
     }
-  }
-
-  updateRoundDots() {
-    this.roundDots.player.forEach((dot, i) => {
-      if (dot) dot.fillColor = i < this.playerWins ? 0x4CAF50 : 0x888888;
-    });
-    
-    this.roundDots.enemy.forEach((dot, i) => {
-      if (dot) dot.fillColor = i < this.enemyWins ? 0xF44336 : 0x888888;
-    });
   }
 
   async handleFightOutcome() {
-    const playerWonPhase = this.playerWins >= 2;
-    const enemyWonPhase = this.enemyWins >= 2;
-    const isLastPhase = this.currentPhase >= this.totalPhases;
-    
-    if (playerWonPhase) {
-      this.phaseWins++;
-      
-      if (!isLastPhase) {
-        // Player venceu a fase, mas não é a última
-        await this.showPhaseVictoryScreen();
-      } else {
-        // Player venceu a última fase - vitória total
-        await this.victoryScreen();
-      }
-    } else if (enemyWonPhase) {
-      // Player perdeu a fase
-      await this.gameOverScreen();
-    } else {
-      // Continua na mesma fase (próximo round)
-      await this.nextRound();
+    const safeDelay = (ms) => {
+        return new Promise(resolve => {
+            this.time.delayedCall(ms, resolve);
+        });
+    };
+
+    try {
+        if (this.playerWins >= 2) {
+            this.phaseWins++;
+            
+            if (this.currentPhase >= this.totalPhases) {
+                await this.endGame(true);
+            } else {
+                // Atualiza o VueComponent antes da transição
+                if (this.vueComponent) {
+                    this.vueComponent.currentRound = 1;
+                    this.vueComponent.playerWins = 0;
+                    this.vueComponent.enemyWins = 0;
+                }
+                
+                await safeDelay(1000); // Pequena pausa antes da transição
+                await this.advanceToNextPhase();
+            }
+        } else if (this.enemyWins >= 2) {
+            await this.endGame(false);
+        } else {
+            this.currentRound++;
+            this.resetFightState();
+            
+            if (this.vueComponent) {
+                this.vueComponent.updateRoundInfo(
+                    this.currentRound,
+                    this.playerWins,
+                    this.enemyWins
+                );
+            }
+            
+            if (this.roundTransition) {
+                await this.roundTransition.show(`Round ${this.currentRound}!`, 1500);
+            }
+        }
+    } catch (error) {
+        console.error('Erro no handleFightOutcome:', error);
+        this.scene.restart({
+            vueComponentRef: this.vueComponent,
+            fightIndex: this.fightIndex
+        });
     }
   }
 
-  async showPhaseVictoryScreen() {
-    if (!this.roundTransition || this.showingPhaseTransition) return;
-    
+  async showPhaseVictory() {
     this.showingPhaseTransition = true;
     
     try {
-      // Mostra mensagem de vitória da fase
-      await this.roundTransition.show(`Fase ${this.currentPhase} Concluída!`, 2000);
-      
-      // Verifica se deve mostrar cutscene (entre fase 2 e 3)
-      if (this.currentPhase === 2) {
-        await this.startCutscene();
-      }
-      
-      // Mostra mensagem para avançar
-      await this.showPhaseAdvancePrompt();
-      
+        // Executa a animação de transição
+        await this.phaseTransition.executePhaseTransition(
+            this.currentPhase,
+            this.currentPhase + 1,
+            this.currentFight.background // Usa o background da próxima fase
+        );
+        
+        // Espera 2 segundos para o jogador ver a mensagem
+        await new Promise(resolve => {
+            this.time.delayedCall(2000, resolve);
+        });
+        
+        // Avança automaticamente
+        this.advanceToNextPhase();
+        
     } catch (error) {
-      console.error('Erro na transição de fase:', error);
-      this.showingPhaseTransition = false;
+        console.error('Erro na transição de fase:', error);
+        this.showingPhaseTransition = false;
     }
-  }
-
-  async showPhaseAdvancePrompt() {
-    // Cria overlay para a mensagem
-    const overlay = this.add.rectangle(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      this.cameras.main.width,
-      this.cameras.main.height,
-      0x000000,
-      0.7
-    ).setDepth(25);
-
-    // Mensagem principal
-    const mainText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2 - 50,
-      `Próxima Fase...`,
-      {
-        fontSize: '48px',
-        fill: '#ffffff',
-        stroke: '#000000',
-        strokeThickness: 4,
-        fontFamily: 'Arial'
-      }
-    ).setOrigin(0.5).setDepth(26);
-
-    // Instrução para avançar
-    const instructionText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2 + 50,
-      'Aperte [E] para ir para a próxima fase',
-      {
-        fontSize: '24px',
-        fill: '#4CAF50',
-        stroke: '#000000',
-        strokeThickness: 3,
-        fontFamily: 'Arial'
-      }
-    ).setOrigin(0.5).setDepth(26);
-
-    // Anima o texto de instrução
-    this.tweens.add({
-      targets: instructionText,
-      alpha: { from: 1, to: 0.5 },
-      duration: 800,
-      yoyo: true,
-      repeat: -1
-    });
-
-    // Ativa flag para aguardar tecla E
-    this.awaitingPhaseAdvance = true;
   }
 
   async advanceToNextPhase() {
     if (this.showingPhaseTransition) return;
-    
     this.showingPhaseTransition = true;
     
     try {
-      // Executa transição visual
-      await this.executePhaseTransition();
-      
-      // Carrega próxima fase
-      await this.loadPhase(this.currentPhase + 1);
-      
-    } catch (error) {
-      console.error('Erro ao avançar fase:', error);
-      this.showingPhaseTransition = false;
-    }
-  }
-
-  async executePhaseTransition() {
-    if (!this.phaseTransition) return;
-    
-    // Determina o background da próxima fase
-    const nextPhaseIndex = this.currentPhase; // currentPhase já foi incrementado
-    const nextFight = fights[nextPhaseIndex];
-    
-    if (!nextFight) {
-      console.error('Próxima fase não encontrada:', nextPhaseIndex);
-      return;
-    }
-    
-    const newBackgroundKey = 'fight-bg'; // Será carregado na próxima fase
-    
-    // Executa transição visual completa
-    await this.phaseTransition.executePhaseTransition(
-      this.currentPhase - 1,
-      this.currentPhase,
-      newBackgroundKey
-    );
-  }
-
-  async loadPhase(phaseNumber) {
-    if (phaseNumber > this.totalPhases) {
-      console.error('Número de fase inválido:', phaseNumber);
-      return;
-    }
-
-    // Reinicia a cena com a nova fase
-    this.scene.restart({
-      vueComponentRef: this.vueComponent,
-      fightIndex: phaseNumber - 1
-    });
-  }
-
-  async startCutscene() {
-    if (!this.cutsceneManager) {
-      console.error('CutsceneManager não inicializado');
-      return;
-    }
-    
-    console.log('Iniciando cutscene entre Fase 2 e Fase 3...');
-    
-    try {
-      // Executa a cutscene completa
-      await this.cutsceneManager.startCutscene();
-      
-      console.log('Cutscene concluída. Preparando para Fase 3...');
-      
-    } catch (error) {
-      console.error('Erro durante a cutscene:', error);
-    }
-  }
-
-  async nextRound() {
-    if (!this.roundTransition) return;
-    
-    this.currentRound++;
-    await this.roundTransition.show(`Round ${this.currentRound}`);
-    this.scene.restart({
-      vueComponentRef: this.vueComponent,
-      fightIndex: this.fightIndex
-    });
-  }
-
-  async victoryScreen() {
-    if (!this.roundTransition) return;
-    
-    await this.roundTransition.show('Você venceu todas as fases!', 3000);
-    await this.waitForInput('SPACE');
-    this.vueComponent?.restartGame();
-  }
-
-  async gameOverScreen() {
-    if (!this.roundTransition) return;
-    
-    // Determina se deve voltar uma fase ou reiniciar completamente
-    const shouldGoBackPhase = this.currentPhase > 1;
-    
-    if (shouldGoBackPhase) {
-      // Mostra opção de voltar fase
-      await this.showPhaseRetryScreen();
-    } else {
-      // Game over tradicional
-      await this.roundTransition.showGameOverScreen();
-      await this.waitForInput('SPACE');
-      this.vueComponent?.restartGame();
-    }
-  }
-
-  async showPhaseRetryScreen() {
-    return new Promise(resolve => {
-      // Cria overlay escuro
-      const overlay = this.add.rectangle(
-        this.cameras.main.width / 2,
-        this.cameras.main.height / 2,
-        this.cameras.main.width,
-        this.cameras.main.height,
-        0x000000,
-        0.8
-      ).setDepth(60);
-      
-      // Container para os elementos da tela
-      const container = this.add.container(
-        this.cameras.main.width / 2,
-        this.cameras.main.height / 2
-      ).setDepth(61);
-      
-      // Título
-      const title = this.add.text(
-        0, -150,
-        'DERROTA!',
-        {
-          fontSize: '48px',
-          fill: '#ff0000',
-          stroke: '#000',
-          strokeThickness: 4,
-          fontStyle: 'bold',
-          fontFamily: 'Arial'
+        const nextFightIndex = this.fightIndex + 1;
+        const nextFight = fights[nextFightIndex];
+        
+        if (!nextFight) {
+            await this.endGame(true);
+            return;
         }
-      ).setOrigin(0.5);
-      container.add(title);
-      
-      // Mensagem
-      const message = this.add.text(
-        0, -80,
-        `Você perdeu na Fase ${this.currentPhase}`,
-        {
-          fontSize: '24px',
-          fill: '#ffffff',
-          stroke: '#000',
-          strokeThickness: 2,
-          fontFamily: 'Arial'
+
+        // Mostra a transição de fase com o novo background
+        await this.phaseTransition.showPhaseTransition(
+            this.currentPhase,
+            this.currentPhase + 1,
+            nextFight.background // Passa o background da próxima fase
+        );
+
+        // Limpa o estado atual
+        if (this.roundTransition?.cleanup) {
+            this.roundTransition.cleanup();
         }
-      ).setOrigin(0.5);
-      container.add(message);
-      
-      // Opções
-      const option1Text = this.add.text(
-        0, 0,
-        'Pressione [R] para tentar a fase novamente',
-        {
-          fontSize: '20px',
-          fill: '#4CAF50',
-          stroke: '#000',
-          strokeThickness: 2,
-          fontFamily: 'Arial'
+        
+        // Atualiza o VueComponent antes de mudar de cena
+        if (this.vueComponent) {
+            this.vueComponent.currentRound = 1;
+            this.vueComponent.playerWins = 0;
+            this.vueComponent.enemyWins = 0;
+            this.vueComponent.currentPhase = nextFightIndex + 1;
         }
-      ).setOrigin(0.5);
-      container.add(option1Text);
-      
-      const option2Text = this.add.text(
-        0, 40,
-        'Pressione [B] para voltar à fase anterior',
-        {
-          fontSize: '20px',
-          fill: '#2196F3',
-          stroke: '#000',
-          strokeThickness: 2,
-          fontFamily: 'Arial'
-        }
-      ).setOrigin(0.5);
-      container.add(option2Text);
-      
-      const option3Text = this.add.text(
-        0, 80,
-        'Pressione [ESC] para voltar ao menu',
-        {
-          fontSize: '20px',
-          fill: '#f44336',
-          stroke: '#000',
-          strokeThickness: 2,
-          fontFamily: 'Arial'
-        }
-      ).setOrigin(0.5);
-      container.add(option3Text);
-      
-      // Anima textos das opções
-      [option1Text, option2Text, option3Text].forEach((text, index) => {
-        this.tweens.add({
-          targets: text,
-          alpha: { from: 1, to: 0.7 },
-          duration: 1000 + (index * 200),
-          yoyo: true,
-          repeat: -1
+        
+        // Inicia a próxima fase
+        this.scene.start('FightScene', {
+            fightIndex: nextFightIndex,
+            vueComponentRef: this.vueComponent,
+            currentRound: 1,
+            playerWins: 0,
+            enemyWins: 0
         });
-      });
-      
-      // Listeners para as teclas
-      const rKey = this.input.keyboard.addKey('R');
-      const bKey = this.input.keyboard.addKey('B');
-      const escKey = this.input.keyboard.addKey('ESC');
-      
-      const cleanup = () => {
-        rKey.removeAllListeners();
-        bKey.removeAllListeners();
-        escKey.removeAllListeners();
-        container.destroy();
-        overlay.destroy();
-      };
-      
-      // Tentar fase novamente
-      rKey.once('down', () => {
-        cleanup();
-        this.retryCurrentPhase();
-        resolve();
-      });
-      
-      // Voltar à fase anterior
-      bKey.once('down', () => {
-        cleanup();
-        this.goBackToPreviousPhase();
-        resolve();
-      });
-      
-      // Voltar ao menu
-      escKey.once('down', () => {
-        cleanup();
-        this.vueComponent?.restartGame();
-        resolve();
-      });
-    });
-  }
-
-  retryCurrentPhase() {
-    console.log(`Tentando novamente a Fase ${this.currentPhase}`);
-    
-    // Reinicia a fase atual
-    this.scene.restart({
-      vueComponentRef: this.vueComponent,
-      fightIndex: this.currentPhase - 1
-    });
-  }
-
-  async goBackToPreviousPhase() {
-    if (this.currentPhase <= 1) {
-      console.log('Já está na primeira fase, não pode voltar');
-      this.vueComponent?.restartGame();
-      return;
-    }
-    
-    const previousPhase = this.currentPhase - 1;
-    console.log(`Voltando para a Fase ${previousPhase}`);
-    
-    try {
-      // Executa transição visual para voltar
-      await this.executeBackwardPhaseTransition(this.currentPhase, previousPhase);
-      
-      // Carrega a fase anterior
-      await this.loadPhase(previousPhase);
-      
+        
     } catch (error) {
-      console.error('Erro ao voltar para fase anterior:', error);
-      this.vueComponent?.restartGame();
+        console.error('Falha ao avançar fase:', error);
+        this.scene.restart();
+    } finally {
+        this.showingPhaseTransition = false;
     }
   }
 
-  async executeBackwardPhaseTransition(fromPhase, toPhase) {
-    if (!this.phaseTransition) return;
-    
-    // Cria efeito de "rebobinar"
-    const rewindOverlay = this.add.rectangle(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      this.cameras.main.width,
-      this.cameras.main.height,
-      0x000080,
-      0
-    ).setDepth(70);
-    
-    // Fade para azul (indicando volta no tempo)
-    await new Promise(resolve => {
-      this.tweens.add({
-        targets: rewindOverlay,
-        alpha: 0.8,
-        duration: 800,
-        ease: 'Power2',
-        onComplete: resolve
-      });
-    });
-    
-    // Texto de transição
-    const rewindText = this.add.text(
-      this.cameras.main.width / 2,
-      this.cameras.main.height / 2,
-      `Voltando para Fase ${toPhase}...`,
-      {
-        fontSize: '36px',
-        fill: '#ffffff',
-        stroke: '#000000',
-        strokeThickness: 3,
-        fontFamily: 'Arial'
-      }
-    ).setOrigin(0.5).setDepth(71);
-    
-    // Anima o texto
-    this.tweens.add({
-      targets: rewindText,
-      scale: { from: 0.8, to: 1.2 },
-      duration: 1000,
-      yoyo: true
-    });
-    
-    // Aguarda e limpa
-    await new Promise(resolve => {
-      this.time.delayedCall(2000, () => {
-        rewindOverlay.destroy();
-        rewindText.destroy();
-        resolve();
-      });
-    });
+  async endGame(playerWon) {
+    try {
+        this.showingPhaseTransition = true;
+        
+        if (playerWon) {
+            await this.cutsceneManager.showVictoryCutscene();
+            this.scene.start('MenuScene');
+        } else {
+            await this.cutsceneManager.showDefeatCutscene();
+            // A cena será reiniciada ou mudada pela própria cutscene
+        }
+    } catch (error) {
+        console.error('Erro na cutscene final:', error);
+        this.scene.start('MenuScene');
+    } finally {
+        this.showingPhaseTransition = false;
+    }
   }
 
-  async waitForInput(key) {
-    return new Promise(resolve => {
-      const keyObj = this.input.keyboard.addKey(key);
-      keyObj.once('down', () => {
-        this.input.keyboard.removeKey(key);
-        resolve();
-      });
+  updateRoundDots() {
+    // Atualiza dots do jogador
+    this.roundDots.player.forEach((dot, index) => {
+      dot.setFillStyle(index < this.playerWins ? 0x4CAF50 : 0x888888);
+    });
+    
+    // Atualiza dots do inimigo
+    this.roundDots.enemy.forEach((dot, index) => {
+      dot.setFillStyle(index < this.enemyWins ? 0xF44336 : 0x888888);
     });
   }
 
   showError(message) {
+    console.error(message);
+    
+    if (this.vueComponent) {
+      this.vueComponent.showError(message);
+    }
+    
     this.add.text(
       this.cameras.main.width / 2,
       this.cameras.main.height / 2,
       message,
-      { 
-        fontSize: '24px', 
-        color: '#FF0000',
-        backgroundColor: '#000000',
-        padding: { x: 10, y: 5 }
+      {
+        fontSize: '32px',
+        fill: '#ff0000',
+        fontFamily: 'Arial'
       }
     ).setOrigin(0.5);
-  }
-
-  handleResize(width, height) {
-    this.cameras.main.setSize(width, height);
-    this.physics.world.setBounds(0, 0, width, height);
-    
-    if (this.background) {
-      this.background.setDisplaySize(width, height);
-    }
-    
-    if (this.ground) {
-      const ground = this.ground.getChildren()[0];
-      if (ground) {
-        ground.setX(width / 2);
-        ground.setScale(width / ground.width, 1);
-        ground.refreshBody();
-        
-        if (this.player) this.player.setY(ground.y - 100);
-        if (this.enemy) this.enemy.setY(ground.y - 100);
-      }
-    }
-    
-    if (this.healthBars.player) {
-      this.healthBars.player.setPosition(width * 0.25, 0);
-    }
-    if (this.healthBars.enemy) {
-      this.healthBars.enemy.setPosition(width * 0.75, 0);
-    }
-    
-    const dotSpacing = 40;
-    const startX = width * 0.1 - dotSpacing;
-    this.roundDots.player.forEach((dot, i) => {
-      if (dot) dot.setX(startX + (i * dotSpacing * 2));
-    });
-    
-    this.roundDots.enemy.forEach((dot, i) => {
-      if (dot) dot.setX(width * 0.9 + (i * dotSpacing * 2));
-    });
   }
 
   damagePlayer(amount) {
@@ -1153,5 +802,55 @@ export default class FightScene extends Phaser.Scene {
       this.enemy.takeDamage(amount);
     }
   }
-}
 
+  handleResize(width, height) {
+    this.cameras.main.setSize(width, height);
+    this.physics.world.setBounds(0, 0, width, height);
+    
+    if (this.background) {
+      this.background.setDisplaySize(width, height);
+    }
+    
+    if (this.ground) {
+      const ground = this.ground.getChildren()[0];
+      if (ground) {
+        ground.setPosition(width / 2, height * 0.01);
+        ground.setScale(width / ground.width, 1);
+        ground.refreshBody();
+      }
+    }
+    
+    if (this.healthBars.player) {
+      this.healthBars.player.setPosition(width * 0.25, 20);
+    }
+    
+    if (this.healthBars.enemy) {
+      this.healthBars.enemy.setPosition(width * 0.75, 20);
+    }
+    
+    // Atualiza posição dos pontos de round
+    const dotSpacing = 40;
+    const startX = width * 0.1 - dotSpacing;
+    
+    this.roundDots.player.forEach((dot, i) => {
+      dot.setPosition(startX + (i * dotSpacing * 2), 60);
+    });
+    
+    this.roundDots.enemy.forEach((dot, i) => {
+      dot.setPosition(width * 0.9 + (i * dotSpacing * 2), 60);
+    });
+  }
+
+  destroy() {
+    // Limpeza de recursos
+    if (this.roundTransition) {
+      this.roundTransition.cleanup();
+    }
+    
+    if (this.phaseTransition) {
+      this.phaseTransition.cleanup();
+    }
+    
+    super.destroy();
+  }
+}

@@ -1,89 +1,134 @@
 import Phaser from 'phaser';
 
 export default class HealthBar {
-    constructor(scene, x, y, width, height, color) {
+    constructor(scene, x, y, width, height, color, isPlayer) {
         this.scene = scene;
         this.x = x;
         this.y = y;
-        this.width = 600;
-        this.height = 50;
+        this.width = width || 400; // Largura reduzida para deixar espaço para o VS
+        this.height = height || 30;
         this.color = color;
-        this.bgColor = 0xffffff; // fundo branco
+        this.bgColor = 0x333333; // Fundo mais escuro
         this.value = 100;
         this.maxValue = 100;
         this.roundsWon = 0;
-
-        this.paddingTop = 20;
+        this.isPlayer = isPlayer; // Para posicionar os rounds corretamente
 
         // Elementos gráficos
         this.bgGraphics = scene.add.graphics();
         this.barGraphics = scene.add.graphics();
-        this.roundCircles = [scene.add.graphics(), scene.add.graphics()]; // duas bolinhas
+        this.roundIndicators = [];
+        
+        // Texto de round (bolinhas)
+        for (let i = 0; i < 2; i++) {
+            this.roundIndicators.push(scene.add.graphics());
+        }
+
+        // Efeitos visuais
+        this.damageEffect = scene.add.graphics();
+        this.damageEffect.setAlpha(0);
 
         this.setPosition(x, y);
         this.draw();
-
-        console.log("HealthBar criada:", x, y);
     }
 
     draw() {
+        // Limpa todos os gráficos
         this.bgGraphics.clear();
         this.barGraphics.clear();
-        this.roundCircles.forEach(c => c.clear());
+        this.roundIndicators.forEach(ind => ind.clear());
+        this.damageEffect.clear();
 
-        const padding = 6;
-        const offsetY = this.paddingTop;
-
-        // Fundo branco com borda arredondada
-        this.bgGraphics.fillStyle(this.bgColor, 1);
+        // Desenha o fundo da barra
+        this.bgGraphics.fillStyle(this.bgColor, 0.8);
         this.bgGraphics.fillRoundedRect(
-            -this.width / 2 - padding,
-            -this.height / 2 - padding + offsetY,
-            this.width + padding * 2,
-            this.height + padding * 2,
+            -this.width / 2 - 4,
+            -this.height / 2 - 4,
+            this.width + 8,
+            this.height + 8,
+            16
+        );
+
+        // Barra de fundo (cinza)
+        this.barGraphics.fillStyle(0x555555, 1);
+        this.barGraphics.fillRoundedRect(
+            -this.width / 2,
+            -this.height / 2,
+            this.width,
+            this.height,
             12
         );
 
-        // Barra de vida (cinza de fundo)
-        this.barGraphics.fillStyle(0x999999, 1);
-        this.barGraphics.fillRect(
-            -this.width / 2,
-            -this.height / 2 + offsetY,
-            this.width,
-            this.height
-        );
-
-        // Barra de vida (colorida conforme valor atual)
+        // Barra de vida atual
         const percentage = this.value / this.maxValue;
         const barWidth = Math.max(0, this.width * percentage);
 
         this.barGraphics.fillStyle(this.color, 1);
         this.barGraphics.fillRoundedRect(
             -this.width / 2,
-            -this.height / 2 + offsetY,
+            -this.height / 2,
             barWidth,
             this.height,
-            1
+            12
         );
 
-        // Desenhar bolinhas de rounds
-        const radius = 14;
-        const spacing = 10;
+        // Efeito de dano (vermelho piscante)
+        if (this.value < this.maxValue) {
+            this.barGraphics.fillStyle(0xff0000, 0.3);
+            this.barGraphics.fillRoundedRect(
+                -this.width / 2 + barWidth,
+                -this.height / 2,
+                this.width - barWidth,
+                this.height,
+                12
+            );
+        }
 
-        this.roundCircles.forEach((circle, index) => {
-            const cx = -radius - spacing / 2 + index * (radius * 2 + spacing);
-            const cy = -this.height / 2 + offsetY - radius * 2; // acima da barra de vida
+        // Indicadores de round (bolinhas)
+        const circleRadius = 10;
+        const circleSpacing = 15;
+        const circleY = -this.height - 15; // Posição acima da barra
 
-            const color = index < this.roundsWon ? 0x000000 : 0xaaaaaa;
+        this.roundIndicators.forEach((circle, index) => {
+            const circleX = (this.isPlayer ? -1 : 1) * 
+                          (this.width/2 - circleRadius - index * (circleRadius*2 + circleSpacing));
+            
+            const fillColor = index < this.roundsWon ? this.color : 0x666666;
+            const lineColor = index < this.roundsWon ? 0xffffff : 0x999999;
 
-            circle.fillStyle(color, 1);
-            circle.fillCircle(cx, cy, radius);
+            circle.fillStyle(fillColor, 1);
+            circle.fillCircle(circleX, circleY, circleRadius);
+            circle.lineStyle(2, lineColor, 1);
+            circle.strokeCircle(circleX, circleY, circleRadius);
         });
 
-        
+        // Adiciona efeito de brilho quando a vida está cheia
+        if (this.value === this.maxValue) {
+            this.barGraphics.fillStyle(0xffffff, 0.2);
+            this.barGraphics.fillRoundedRect(
+                -this.width / 2 + barWidth - 30,
+                -this.height / 2,
+                30,
+                this.height,
+                12
+            );
+        }
     }
 
     setValue(newValue) {
+        // Efeito visual ao receber dano
+        if (newValue < this.value) {
+            this.scene.tweens.add({
+                targets: this.damageEffect,
+                alpha: 0.8,
+                duration: 100,
+                yoyo: true,
+                onComplete: () => {
+                    this.damageEffect.setAlpha(0);
+                }
+            });
+        }
+
         this.value = Phaser.Math.Clamp(newValue, 0, this.maxValue);
         this.draw();
     }
@@ -95,6 +140,17 @@ export default class HealthBar {
 
     setRoundsWon(rounds) {
         this.roundsWon = Phaser.Math.Clamp(rounds, 0, 2);
+        
+        // Efeito ao ganhar um round
+        if (rounds > this.roundsWon) {
+            this.scene.tweens.add({
+                targets: this.roundIndicators[rounds-1],
+                scale: { from: 1, to: 1.5 },
+                duration: 300,
+                yoyo: true
+            });
+        }
+        
         this.draw();
     }
 
@@ -104,21 +160,23 @@ export default class HealthBar {
 
         this.bgGraphics.setPosition(x, y);
         this.barGraphics.setPosition(x, y);
-        this.roundCircles.forEach(c => c.setPosition(x, y));
+        this.damageEffect.setPosition(x, y);
+        this.roundIndicators.forEach(ind => ind.setPosition(x, y));
     }
 
     getGraphics() {
         return [
             this.bgGraphics,
             this.barGraphics,
-            ...this.roundCircles
+            this.damageEffect,
+            ...this.roundIndicators
         ];
     }
 
     destroy() {
         this.bgGraphics.destroy();
         this.barGraphics.destroy();
-        this.roundCircles.forEach(c => c.destroy());
+        this.damageEffect.destroy();
+        this.roundIndicators.forEach(ind => ind.destroy());
     }
-
 }

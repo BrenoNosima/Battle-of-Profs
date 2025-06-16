@@ -1,77 +1,84 @@
 /**
  * Configurações das lutas do jogo
- * Cada objeto representa uma luta com:
- * - background: imagem de fundo
- * - player: classe do personagem do jogador
- * - enemy: classe do personagem inimigo
- * - sprites: caminhos para as spritesheets de cada ação
+ * Cada objeto representa uma fase com:
+ * - name: Nome da luta (opcional, para debug)
+ * - background: Imagem de fundo (usará a mesma para todas as fases se não especificado)
+ * - player: Classe do personagem do jogador
+ * - enemy: Classe do personagem inimigo
+ * - playerSprites: Configuração das sprites do jogador
+ * - enemySprites: Configuração das sprites do inimigo
  */
+
+// Configuração compartilhada
+
+const playerSpritesConfig = {
+    idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 110, frames: 1 },
+    walk: { path: '/sprite/player/playerAndando.png', frameWidth: 66.5, frameHeight: 110, frames: 5 },
+    attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 110, frames: 4 },
+    block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 115, frames: 1 },
+    jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 110, frames: 1 },
+    dash: { path: '/sprite/player/playerDash.png', frameWidth: 162, frameHeight: 90, frames: 1 }
+};
 
 export default [
     {
-        name: "Breno vs Moreno", // Nome da luta
-        background: 'menu.png', // Imagem de fundo (em public/backgrounds/)
-        player: 'Player', // Classe do jogador (Player.js)
-        enemy: 'Moreno', // Classe do inimigo (Moreno.js)
-        playerSprites: {
-            idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 110, frames: 1 },
-            walk: { path: '/sprite/player/playerAndando.png', frameWidth: 66.5, frameHeight: 110, frames: 5 },
-            attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 110, frames: 4 },
-            block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 115, frames: 1 },
-            jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 110, frames: 1 },
-            dash: { path: '/sprite/player/playerDash.png', frameWidth: 162, frameHeight: 90, frames: 1 } // NOVO!
-        },
+        name: "Fase 1: Breno vs Moreno",
+        background: 'menu.png', // Usando uma imagem de fundo compartilhada
+        player: 'Player',
+        enemy: 'Moreno',
+        playerSprites: playerSpritesConfig,
         enemySprites: {
             idle: {path: '/sprite/moreno/morenoParado.png', frameWidth: 80, frameHeight: 110, frames: 1},
             walk: {path: '/sprite/moreno/morenoAndando.png', frameWidth: 70, frameHeight: 110, frames: 4},
             attack: {path: '/sprite/moreno/morenoAtaque.png',frameWidth: 86.25, frameHeight: 110, frames: 4},
-            special: {path: '/sprite/moreno/morenoAtaqueEspecial.png',frameWidth: 190, frameHeight: 110, frames: 4},
+            special: {path: '/sprite/moreno/morenoAtaqueEspecial.png',frameWidth: 140, frameHeight: 100, frames: 4},
             jump: {path: '/sprite/moreno/morenoPulando.png', frameWidth: 80, frameHeight: 110, frames: 1},
-        }
-    },
-    {
-        name: "Breno vs Cidão",
-        background: 'inspira-space.png', 
-        player: 'Player', 
-        enemy: 'Cidao',
-        playerSprites: {
-            idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 110, frames: 1 },
-            walk: { path: '/sprite/player/playerAndando.png', frameWidth: 66.5, frameHeight: 110, frames: 5 },
-            attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 110, frames: 4 },
-            block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 115, frames: 1 },
-            jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 110, frames: 1 },
-            dash: { path: '/sprite/player/playerDash.png', frameWidth: 162, frameHeight: 90, frames: 1 } // NOVO!
         },
-        enemySprites: {
-            idle: {path: '/sprite/cidao/cidaoParado.png', frameWidth: 67, frameHeight: 105, frames: 1},
-            walk: {path: '/sprite/cidao/cidaoAndando.png',frameWidth: 57.5, frameHeight: 90, frames: 4},
-            attack: {path: '/sprite/cidao/cidaoAtaque.png',frameWidth: 80, frameHeight: 99, frames: 4},
-            special: {path: '/sprite/cidao/cidaoAtaqueEspecial.png',frameWidth: 425, frameHeight: 99, frames: 1},
-            jump: {path: '/sprite/cidao/cidaoPulando.png', frameWidth: 80, frameHeight: 108, frames: 1},
+        enemyConfig: {
+            // Configurações específicas do Moreno
+            health: 100,
+            speed: 200,
+            attackDamage: 8
         }
     },
     {
-        name: "Breno vs Hugo",
+        name: "Fase 2: Breno vs Cidão",
         background: 'bloco8.png',
         player: 'Player',
-        enemy: 'Hugo',
-        playerSprites: {
-            idle: { path: '/sprite/player/playerParado.png', frameWidth: 70, frameHeight: 110, frames: 1 },
-            walk: { path: '/sprite/player/playerAndando.png', frameWidth: 66.5, frameHeight: 110, frames: 5 },
-            attack: { path: '/sprite/player/playerAtaque.png', frameWidth: 87.5, frameHeight: 110, frames: 4 },
-            block: { path: '/sprite/player/playerDefendendo.png', frameWidth: 118, frameHeight: 115, frames: 1 },
-            jump: { path: '/sprite/player/playerPulando.png', frameWidth: 75, frameHeight: 110, frames: 1 },
-            dash: { path: '/sprite/player/playerDash.png', frameWidth: 162, frameHeight: 90, frames: 1 } // NOVO!
-        },
+        enemy: 'Cidao',
+        playerSprites: playerSpritesConfig,
         enemySprites: {
-            idle: {path: '/sprite/hugo/hugoParado.png', frameWidth: 85, frameHeight: 125, frames: 1},
-            walk: {path: '/sprite/hugo/hugoAndando.png',frameWidth: 72.5, frameHeight: 110, frames: 4},
-            attack: {path: '/sprite/hugo/hugoAtaque.png',frameWidth: 77.5, frameHeight: 115, frames: 4},
-            special: {path: '/sprite/hugo/hugoAtaqueEspecial.png',frameWidth: 110, frameHeight: 122, frames: 4},
-            jump: {path: '/sprite/hugo/hugoPulando.png', frameWidth: 97, frameHeight: 120, frames: 1},
+            idle: {path: '/sprite/cidao/cidaoParado.png', frameWidth: 67, frameHeight: 100, frames: 1},
+            walk: {path: '/sprite/cidao/cidaoAndando.png',frameWidth: 54, frameHeight: 100, frames: 4},
+            attack: {path: '/sprite/cidao/cidaoAtaque.png',frameWidth: 80, frameHeight: 90, frames: 4},
+            special: {path: '/sprite/cidao/cidaoAtaqueEspecial.png',frameWidth: 105, frameHeight: 90, frames: 1},
+            jump: {path: '/sprite/cidao/cidaoPulando.png', frameWidth: 80, frameHeight: 100, frames: 1},
+        },
+        enemyConfig: {
+            // Configurações específicas do Cidão
+            health: 120,
+            speed: 180,
+            attackDamage: 10
+        }
+    },
+    {
+        name: "Fase 3: Breno vs Hugo",
+        background: 'inspira-space.png',
+        player: 'Player',
+        enemy: 'Hugo',
+        playerSprites: playerSpritesConfig,
+        enemySprites: {
+            idle: { path: '/sprite/hugo/hugoParado.png', frameWidth: 85, frameHeight: 125, frames: 1 },
+            walk: { path: '/sprite/hugo/hugoAndando.png', frameWidth: 72.5, frameHeight: 110, frames: 4 },
+            attack: { path: '/sprite/hugo/hugoAtaque.png', frameWidth: 77.5, frameHeight: 115, frames: 4 },
+            special: { path: '/sprite/hugo/hugoAtaqueEspecial.png', frameWidth: 110, frameHeight: 122, frames: 4 },
+            jump: { path: '/sprite/hugo/hugoPulando.png', frameWidth: 97, frameHeight: 120, frames: 1 }
+        },
+        enemyConfig: {
+            // Configurações específicas do Hugo
+            health: 150,
+            speed: 160,
+            attackDamage: 12
         }
     }
 ];
-
-
-
