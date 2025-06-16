@@ -101,7 +101,7 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         if (this.isPlayerInAttackRange(player)) {
             this.applyAttackEffects(player);
         }
-
+        this.scene.sound.play('punch', { volume: 0.5 });
         this.createAttackEffect();
         this.startAttackCooldown();
     }

@@ -271,9 +271,138 @@ export default class PhaseTransition {
 
   async showPhaseTransition(fromPhase, toPhase, newBackgroundKey) {
     return new Promise(resolve => {
+        // Pausa a música de fundo se estiver tocando
+        if (this.scene.backgroundMusic && this.scene.backgroundMusic.isPlaying) {
+            this.scene.backgroundMusic.pause();
+        }
+
         // Troca o background imediatamente
         if (this.scene.background) {
             this.scene.background.destroy();
+        }
+
+         // Se for transição da fase 2 para 3, mostra o vídeo
+        if (fromPhase === 2 && toPhase === 3) {
+            const video = this.scene.add.video(
+              this.scene.cameras.main.width / 2,
+              this.scene.cameras.main.height / 2,
+              'video-fase2-3'
+            ).setOrigin(0.5).setDepth(100);
+
+            // Ajusta o vídeo para cobrir a tela mantendo o aspecto
+            video.on('play', () => {
+              const vw = video.width;
+              const vh = video.height;
+              const sw = this.scene.cameras.main.width;
+              const sh = this.scene.cameras.main.height;
+              const scale = Math.max(sw / vw, sh / vh);
+              video.setScale(scale);
+            });
+
+            video.play(true);
+
+            // Adiciona botão de pular
+            const skipButton = this.scene.add.text(
+              this.scene.cameras.main.width - 40,
+              40,
+              'Pular',
+              {
+              fontSize: '32px',
+              fill: '#fff',
+              backgroundColor: '#000',
+              padding: { x: 16, y: 8 },
+              fontFamily: 'Arial',
+              fontStyle: 'bold'
+              }
+            )
+            .setOrigin(1, 0)
+            .setDepth(101)
+            .setInteractive({ useHandCursor: true });
+
+            skipButton.on('pointerdown', () => {
+              video.stop();
+              video.destroy();
+              skipButton.destroy();
+              resolve();
+            });
+
+            // Remove botão ao terminar o vídeo normalmente
+            video.once('complete', () => {
+              video.destroy();
+              skipButton.destroy();
+              resolve();
+            });
+            // Garante que o vídeo só passe uma vez
+            video.setLoop(false);
+            // Garante que o vídeo será destruído e resolve só após o término real
+            video.once('complete', () => {
+                video.destroy();
+                resolve();
+            });
+
+            // Não chama resolve aqui, só no evento 'complete'
+            return;
+        }
+        
+        // Se for transição da fase 3 para 4, mostra o vídeo correspondente
+        if (fromPhase === 3 && toPhase === 4) {
+            const video = this.scene.add.video(
+              this.scene.cameras.main.width / 2,
+              this.scene.cameras.main.height / 2,
+              'final'
+            ).setOrigin(0.5).setDepth(100);
+
+            video.on('play', () => {
+              const vw = video.width;
+              const vh = video.height;
+              const sw = this.scene.cameras.main.width;
+              const sh = this.scene.cameras.main.height;
+              const scale = Math.max(sw / vw, sh / vh);
+                video.setScale(scale);
+
+                // Adiciona botão de pular
+                const skipButton = this.scene.add.text(
+                this.scene.cameras.main.width - 40,
+                40,
+                'Pular',
+                {
+                  fontSize: '32px',
+                  fill: '#fff',
+                  backgroundColor: '#000',
+                  padding: { x: 16, y: 8 },
+                  fontFamily: 'Arial',
+                  fontStyle: 'bold'
+                }
+                )
+                .setOrigin(1, 0)
+                .setDepth(101)
+                .setInteractive({ useHandCursor: true });
+
+                skipButton.on('pointerdown', () => {
+                video.stop();
+                video.destroy();
+                skipButton.destroy();
+                resolve();
+                });
+
+                // Remove botão ao terminar o vídeo normalmente
+                video.once('complete', () => {
+                video.destroy();
+                skipButton.destroy();
+                resolve();
+                });
+            });
+
+            
+
+            video.play(true);
+            video.setLoop(false);
+            video.once('complete', () => {
+          video.destroy();
+          resolve();
+            });
+
+            return;
         }
         
         this.scene.background = this.scene.add.image(0, 0, newBackgroundKey)
