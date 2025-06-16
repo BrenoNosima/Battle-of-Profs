@@ -13,8 +13,8 @@
     <!-- Usamos :src para vincular dinamicamente a imagem importada -->
     <img :src="logoUrl" alt="Logo do Professor Stryke" class="logo-jogo mb-4 md:mb-8">
 
-    <!-- Caixa do Menu Principal (visível quando showVideo é false) -->
-    <div v-if="!showVideo" class="menu-box w-full max-w-md md:max-w-lg lg:max-w-xl" id="menu-box">
+    <!-- Menu principal -->
+    <div v-if="!showIntroImage && !showVideo" class="menu-box w-full max-w-md md:max-w-lg lg:max-w-xl" id="menu-box">
       <ul id="main-menu" class="space-y-4 w-full">
         <!-- Botão JOGAR -->
         <!-- @click chama o método handlePlayClick -->
@@ -41,8 +41,12 @@
       </ul>
     </div>
 
-    <!-- Vídeo de introdução aparece só depois de clicar em JOGAR -->
-    <!-- Novo bloco: Mostra o vídeo quando showVideo for true -->
+    <!-- Imagem de introdução -->
+    <div v-else-if="showIntroImage" class="intro-image-container flex flex-col items-center justify-center">
+      <img :src="textoIntroPath" alt="Introdução" class="intro-image mb-8" />
+    </div>
+
+    <!-- Vídeo de introdução -->
     <div v-else class="intro-video-container">
       <video
         ref="introVideo"
@@ -71,8 +75,10 @@ import logoPath from '@/assets/img/ChatGPT Image 13 de jun. de 2025, 22_10_03.pn
 // Renomear o arquivo seria uma boa prática para evitar problemas.
 // Assumindo que o arquivo foi copiado corretamente para src/assets/img/
 import backgroundPath from '@/assets/img/ChatGPT Image 13 de jun. de 2025, 21_23_22.png';
+import textoIntroPath from '@/assets/img/texto_intro.png';
 
 // Variável reativa para controlar se o vídeo está sendo exibido
+const showIntroImage = ref(false);
 const showVideo = ref(false);
 
 // Obtém a instância do roteador (não estritamente necessário aqui, mas útil se precisarmos de navegação programática)
@@ -84,9 +90,15 @@ const backgroundImageUrl = ref(backgroundPath);
 
 // Função chamada quando o botão "JOGAR" é clicado
 const handlePlayClick = () => {
-  // Ao clicar em jogar, mostra o vídeo de introdução
-  showVideo.value = true;
+  showIntroImage.value = true;
+  setTimeout(goToVideo, 15000); // 15 segundos
 };
+
+// Quando clicar em "Continuar" ou passar o tempo, mostra o vídeo
+function goToVideo() {
+  showIntroImage.value = false;
+  showVideo.value = true;
+}
 
 // Função chamada quando o vídeo termina ou o usuário clica em "Pular vídeo"
 function goToGame() {
@@ -258,6 +270,46 @@ function playHoverSound() {
   z-index: 101;
 }
 .skip-btn:hover {
+  background: #012643;
+  color: #5ae8ec;
+}
+
+/* --- NOVO: Estilos para a imagem de introdução --- */
+.intro-image-container {
+  position: fixed; /* Garante que cobre toda a tela */
+  top: 0; left: 0; right: 0; bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.95);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.intro-image {
+  max-width: 90vw;
+  height: 98%;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.continue-btn {
+  margin-top: 24px;
+  padding: 12px 24px;
+  font-family: 'Press Start 2P', cursive, sans-serif;
+  background: #5ae8ec;
+  color: #012643;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  box-shadow: 2px 2px 0 #000;
+  transition: background 0.2s, color 0.2s;
+  z-index: 101;
+}
+.continue-btn:hover {
   background: #012643;
   color: #5ae8ec;
 }
