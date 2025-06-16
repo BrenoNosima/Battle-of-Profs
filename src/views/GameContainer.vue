@@ -70,7 +70,10 @@ export default {
         this.game.scale.resize(window.innerWidth, window.innerHeight);
         const scene = this.game.scene.getScene('FightScene');
         if (scene && scene.scene.isActive()) {
-           scene.handleResize(window.innerWidth, window.innerHeight);
+            // Verifique se o método existe antes de chamar
+            if (typeof scene.handleResize === 'function') {
+                scene.handleResize(window.innerWidth, window.innerHeight);
+            }
         }
       }
     },
