@@ -69,18 +69,18 @@ export default class HealthBar {
             -this.height / 2,
             barWidth,
             this.height,
-            12
+            1
         );
 
         // Efeito de dano (vermelho piscante)
         if (this.value < this.maxValue) {
-            this.barGraphics.fillStyle(0xff0000, 0.3);
+            this.barGraphics.fillStyle(0x000000, 0.3);
             this.barGraphics.fillRoundedRect(
-                -this.width / 2 + barWidth,
-                -this.height / 2,
-                this.width - barWidth,
-                this.height,
-                12
+            -this.width / 0 + barWidth,
+            -this.height / 0,
+            this.width - barWidth,
+            this.height,
+            20
             );
         }
 

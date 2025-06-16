@@ -15,7 +15,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.isBlocking = false;    // Inicializa isBlocking como false
         this.speed = 400;
         this.attackRange = 100;
-        this.attackDamage = 10;
+        this.attackDamage = 100;
 
         // Player.js (construtor) - versão limpa
         scene.physics.add.existing(this);

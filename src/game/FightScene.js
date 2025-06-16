@@ -61,7 +61,7 @@ export default class FightScene extends Phaser.Scene {
     // Propriedades para sistema de fases
     this.phaseWins = 0;
     this.currentPhase = 1;
-    this.totalPhases = 3;
+    this.totalPhases = 4; // <-- altere para 4
     this.showingPhaseTransition = false;
     this.phaseTransition = null;
     this.cutsceneManager = null;
@@ -137,11 +137,18 @@ export default class FightScene extends Phaser.Scene {
     this.load.audio('jump', '/sounds/jump.mp3');
     this.load.audio('block', '/sounds/block.mp3');
     this.load.audio('dash', '/sounds/dash.mp3');
-
+    this.load.audio('music', '/sounds/musica-jogo.mp3');
+    this.load.video('video-fase2-3', '/videos/luta final.mp4');
+    this.load.video('final', '/videos/final.mp4');
     // Remove os carregamentos duplicados de background que estavam aqui antes
 }
 
   async create() {
+    // Retoma a música de fundo se estiver pausada
+    if (this.backgroundMusic && this.backgroundMusic.isPaused) {
+        this.backgroundMusic.resume();
+    }
+
     // Configuração do AudioContext
     const handleAudioContext = () => {
         if (!this.sound || !this.sound.context) {
@@ -294,6 +301,14 @@ export default class FightScene extends Phaser.Scene {
     if (this.currentRound === 1 && !this.controlsShown) {
         await this.showInitialInstructions();
     }
+
+    // Toca música de fundo em loop ao entrar na cena
+    if (!this.sound.get('music')) {
+        const music = this.sound.add('music', { loop: true, volume: 0.5 });
+        this.backgroundMusic = music;
+        music.play();
+    }
+
   }
 
   update() {
@@ -378,10 +393,10 @@ export default class FightScene extends Phaser.Scene {
     // Barra do jogador (verde)
     this.healthBars.player = new HealthBar(
         this,
-        this.cameras.main.width * 0.25,
-        0,
-        300, // Largura reduzida
-        25,
+        this.cameras.main.width * 0.2,
+        10,
+        700, // Largura reduzida
+        45,
         0x4CAF50, // Verde
         true // É o player
     );
@@ -389,10 +404,10 @@ export default class FightScene extends Phaser.Scene {
     // Barra do inimigo (vermelha)
     this.healthBars.enemy = new HealthBar(
         this,
-        this.cameras.main.width * 0.75,
-        0,
-        300, // Largura reduzida
-        25,
+        this.cameras.main.width * 0.8,
+        10,
+        700, // Largura reduzida
+        45,
         0xF44336, // Vermelho
         false // É o inimigo
     );
@@ -439,7 +454,7 @@ export default class FightScene extends Phaser.Scene {
     const dotSize = 20;
     const spacing = 40;
     const startX = this.cameras.main.width * 0.1 - spacing;
-    const yPos = 60;
+    const yPos = 80;
     
     for (let i = 0; i < 2; i++) {
       const dot = this.add.circle(
