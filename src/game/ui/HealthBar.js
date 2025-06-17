@@ -153,7 +153,7 @@ export default class HealthBar {
         
         this.draw();
     }
-
+        
     setPosition(x, y) {
         this.x = x;
         this.y = y;

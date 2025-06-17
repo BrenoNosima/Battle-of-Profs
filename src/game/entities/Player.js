@@ -25,7 +25,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         this.body.setSize(60, 100); // Ajuste para valor menor que a sprite
         this.body.setOffset(40, 70);
 
-        this.setScale(1.5);
+        this.setScale(2);
 
 
         console.log("Player: Entidade criada");
@@ -200,8 +200,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
         
         console.log("Player: Iniciando bloqueio");
         this.isBlocking = true;
-        this.blockSprite.setVisible(true);
-        this.setTint(0x00ffff);
+        
         this.play('player-block', true); // Sempre força a animação de defesa
     }
 
