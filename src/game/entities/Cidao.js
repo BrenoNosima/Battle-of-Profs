@@ -9,8 +9,8 @@ export default class Cidao extends Enemy {
         super(scene, x, y, texture, {
             animPrefix: 'cidao',
             health: 120,
-            speed: 180,
-            attackDamage: 10
+            speed: 250,
+            attackDamage: 15
         });
         
         // Configurações específicas do Cidão
@@ -31,6 +31,11 @@ export default class Cidao extends Enemy {
         
         this.startAttack();
         this.play(`${this.animPrefix}-special`, true);
+
+        // Toca o áudio do super ataque
+        if (this.scene.sound) {
+            this.scene.sound.play('super');
+        }
         
         // Efeito especial do Cidão - ataque de longo alcance
         const attackRange = 200;

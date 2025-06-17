@@ -295,7 +295,28 @@ export default class PhaseTransition {
             this.scene.background.destroy();
         }
 
-         // Se for transição da fase 2 para 3, mostra o vídeo
+        // --- Adicione este bloco para a transição da fase 1 para 2 ---
+        if (fromPhase === 1 && toPhase === 2) {
+            // Mostra a imagem de transição
+
+            const transitionImage = this.scene.add.image(
+                this.scene.cameras.main.width / 2,
+                this.scene.cameras.main.height / 2,
+                'transicaoMC' // Substitua pelo key da imagem carregada no preload
+            ).setOrigin(0.5).setDepth(100)
+             .setDisplaySize(this.scene.cameras.main.width, this.scene.cameras.main.height);
+
+            // Exibe por 2 segundos e depois remove
+            this.scene.time.delayedCall(5000, () => {
+                transitionImage.destroy();
+                resolve();
+            });
+
+            return;
+        }
+        // --- Fim do bloco adicionado ---
+
+        // Se for transição da fase 2 para 3, mostra o vídeo
         if (fromPhase === 2 && toPhase === 3) {
             const video = this.scene.add.video(
               this.scene.cameras.main.width / 2,
@@ -356,6 +377,78 @@ export default class PhaseTransition {
 
             // Não chama resolve aqui, só no evento 'complete'
             return;
+            // Mostra uma imagem antes de começar a 3ª luta (transição da fase 2 para 3)
+            const preFightImage = this.scene.add.image(
+              this.scene.cameras.main.width / 2,
+              this.scene.cameras.main.height / 2,
+              '' // Substitua pelo key da imagem carregada no preload
+            ).setOrigin(0.5).setDepth(99)
+             .setDisplaySize(this.scene.cameras.main.width, this.scene.cameras.main.height);
+
+            // Exibe por 3 segundos e depois remove e mostra o vídeo
+            this.scene.time.delayedCall(3000, () => {
+              preFightImage.destroy();
+
+              // Agora mostra o vídeo normalmente
+              const video = this.scene.add.video(
+              this.scene.cameras.main.width / 2,
+              this.scene.cameras.main.height / 2,
+              'video-fase2-3'
+              ).setOrigin(0.5).setDepth(100);
+
+              video.on('play', () => {
+              const vw = video.width;
+              const vh = video.height;
+              const sw = this.scene.cameras.main.width;
+              const sh = this.scene.cameras.main.height;
+              const scale = Math.max(sw / vw, sh / vh);
+              video.setScale(scale);
+              });
+
+              video.play(true);
+
+              // Adiciona botão de pular
+              const skipButton = this.scene.add.text(
+              this.scene.cameras.main.width - 40,
+              40,
+              'Pular',
+              {
+                fontSize: '32px',
+                fill: '#fff',
+                backgroundColor: '#000',
+                padding: { x: 16, y: 8 },
+                fontFamily: 'Arial',
+                fontStyle: 'bold'
+              }
+              )
+              .setOrigin(1, 0)
+              .setDepth(101)
+              .setInteractive({ useHandCursor: true });
+
+              skipButton.on('pointerdown', () => {
+              video.stop();
+              video.destroy();
+              skipButton.destroy();
+              resolve();
+              });
+
+              // Remove botão ao terminar o vídeo normalmente
+              video.once('complete', () => {
+              video.destroy();
+              skipButton.destroy();
+              resolve();
+              });
+              // Garante que o vídeo só passe uma vez
+              video.setLoop(false);
+              // Garante que o vídeo será destruído e resolve só após o término real
+              video.once('complete', () => {
+                video.destroy();
+                resolve();
+              });
+            });
+
+            // Não chama resolve aqui, só após o vídeo terminar
+            return;
         }
         
         // Se for transição da fase 3 para 4, mostra o vídeo correspondente
@@ -372,48 +465,102 @@ export default class PhaseTransition {
               const sw = this.scene.cameras.main.width;
               const sh = this.scene.cameras.main.height;
               const scale = Math.max(sw / vw, sh / vh);
-                video.setScale(scale);
-
-                // Adiciona botão de pular
-                const skipButton = this.scene.add.text(
-                this.scene.cameras.main.width - 40,
-                40,
-                'Pular',
-                {
-                  fontSize: '32px',
-                  fill: '#fff',
-                  backgroundColor: '#000',
-                  padding: { x: 16, y: 8 },
-                  fontFamily: 'Arial',
-                  fontStyle: 'bold'
-                }
-                )
-                .setOrigin(1, 0)
-                .setDepth(101)
-                .setInteractive({ useHandCursor: true });
-
-                skipButton.on('pointerdown', () => {
-                video.stop();
-                video.destroy();
-                skipButton.destroy();
-                resolve();
-                });
-
-                // Remove botão ao terminar o vídeo normalmente
-                video.once('complete', () => {
-                video.destroy();
-                skipButton.destroy();
-                resolve();
-                });
+              video.setScale(scale);
             });
-
-            
 
             video.play(true);
             video.setLoop(false);
-            video.once('complete', () => {
-          video.destroy();
+
+            // Função para mostrar parabéns, confetes e música (garante execução única)
+            let congratsShown = false;
+            const showCongrats = () => {
+              if (congratsShown) return;
+              congratsShown = true;
+
+              const congratsImage = this.scene.add.image(
+          this.scene.cameras.main.width / 2,
+          this.scene.cameras.main.height / 2,
+          'final' // Substitua pelo key da imagem de parabéns carregada no preload
+              ).setOrigin(0.5).setDepth(102)
+               .setDisplaySize(this.scene.cameras.main.width, this.scene.cameras.main.height);
+
+              // Toca música de parabéns
+              let congratsMusic;
+              if (this.scene.sound && this.scene.sound.context && this.scene.sound.locked === false) {
+          congratsMusic = this.scene.sound.add('musica-final', { loop: false });
+          congratsMusic.play();
+              }
+
+              // Função para criar confetes caindo
+              const confettiGroup = this.scene.add.group();
+              const confettiColors = [0xffe066, 0xff6f91, 0x6bcfff, 0x81f495, 0xf9f871];
+              const confettiCount = 40;
+
+              for (let i = 0; i < confettiCount; i++) {
+          const x = Phaser.Math.Between(0, this.scene.cameras.main.width);
+          const y = Phaser.Math.Between(-100, -10);
+          const size = Phaser.Math.Between(8, 20);
+          const color = Phaser.Utils.Array.GetRandom(confettiColors);
+
+          const confetti = this.scene.add.rectangle(x, y, size, size, color)
+            .setDepth(103)
+            .setAngle(Phaser.Math.Between(0, 360));
+          confettiGroup.add(confetti);
+
+          this.scene.tweens.add({
+            targets: confetti,
+            y: this.scene.cameras.main.height + 30,
+            angle: `+=${Phaser.Math.Between(180, 720)}`,
+            duration: Phaser.Math.Between(1200, 2200),
+            delay: Phaser.Math.Between(0, 500),
+            ease: 'Cubic.easeIn',
+            onComplete: () => confetti.destroy()
+          });
+              }
+
+              // Remove tudo após 4 segundos
+              this.scene.time.delayedCall(10000000000, () => {
+          congratsImage.destroy();
+          if (congratsMusic) congratsMusic.stop();
+          confettiGroup.clear(true, true);
           resolve();
+              });
+            };
+
+            // Mostra a imagem de parabéns só depois do vídeo terminar ou pular
+            video.once('complete', () => {
+              video.destroy();
+              showCongrats();
+            });
+
+            // Adiciona botão de pular
+            const skipButton = this.scene.add.text(
+              this.scene.cameras.main.width - 40,
+              40,
+              'Pular',
+              {
+          fontSize: '32px',
+          fill: '#fff',
+          backgroundColor: '#000',
+          padding: { x: 16, y: 8 },
+          fontFamily: 'Arial',
+          fontStyle: 'bold'
+              }
+            )
+            .setOrigin(1, 0)
+            .setDepth(101)
+            .setInteractive({ useHandCursor: true });
+
+            skipButton.on('pointerdown', () => {
+              video.stop();
+              video.destroy();
+              skipButton.destroy();
+              showCongrats();
+            });
+
+            // Remove botão ao destruir o vídeo
+            video.once('destroy', () => {
+              skipButton.destroy();
             });
 
             return;

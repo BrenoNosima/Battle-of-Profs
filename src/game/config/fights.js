@@ -83,7 +83,8 @@ export default [
     },
     {
         name: "Fase Final: Parabéns!",
-        background: 'parabens.png', // coloque uma imagem de fundo comemorativa
+        background: 'final.png', // coloque uma imagem de fundo comemorativa
+        music: 'music.mp3', // música de finalização
         player: null,
         enemy: null,
         playerSprites: null,
