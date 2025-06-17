@@ -13,10 +13,6 @@ export default class Hugo extends Enemy {
             attackDamage: 15
         });
         
-        // Configurações específicas do Hugo
-        this.baseTint = 0xff0000; // Vermelho
-        this.setTint(this.baseTint);
-        
         // Ajustes específicos de física - Hugo é o boss final
         this.attackRange = 90;
         this.attackCooldownTime = 1300;

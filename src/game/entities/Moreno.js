@@ -13,10 +13,6 @@ export default class Moreno extends Enemy {
             attackDamage: 15
         });
         
-        // Configurações específicas do Moreno
-        this.baseTint = 0xffa500; // Laranja
-        this.setTint(this.baseTint);
-        
         // Ajustes específicos de física se necessário
         this.attackRange = 75;
         this.attackCooldownTime = 1000;
