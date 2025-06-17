@@ -138,6 +138,7 @@ export default class FightScene extends Phaser.Scene {
     this.load.audio('block', '/sounds/block.mp3');
     this.load.audio('dash', '/sounds/dash.mp3');
     this.load.audio('music', '/sounds/musica-jogo.mp3');
+    this.load.audio('victory', '/sounds/super.mp3');
     this.load.video('video-fase2-3', '/videos/luta final.mp4');
     this.load.video('final', '/videos/final.mp4');
     // Remove os carregamentos duplicados de background que estavam aqui antes
