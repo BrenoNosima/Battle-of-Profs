@@ -72,30 +72,28 @@ export default class FightScene extends Phaser.Scene {
         this.vueComponent = data.vueComponentRef;
         // Sincroniza os valores iniciais
         this.currentRound = this.vueComponent.currentRound = data.currentRound || 1;
-        this.playerWins = this.vueComponent.playerWins = data.playerWins || 0;
-        this.enemyWins = this.vueComponent.enemyWins = data.enemyWins || 0;
+        this.playerWins = this.vueComponent.playerWins = data.playerWins || 0; // Padrão 0
+        this.enemyWins = this.vueComponent.enemyWins = data.enemyWins || 0;   // Padrão 0
     } else {
         this.currentRound = 1;
         this.playerWins = 0;
         this.enemyWins = 0;
     }
-    
+
     this.fightIndex = data?.fightIndex || 0;
     this.currentPhase = this.fightIndex + 1;
     this.currentFight = fights[this.fightIndex];
-    
+
     if (!this.currentFight) {
         console.error('Luta atual não definida!');
         this.scene.start('MenuScene');
         return;
     }
-    
-    console.log(`Iniciando Fase ${this.currentPhase}: ${this.currentFight.name}`);
   }
 
-
-
   preload() {
+
+    
     const loadSprite = (key, config) => {
       if (!config?.path) {
         console.error(`Sprite ${key} não configurada!`);
@@ -108,13 +106,24 @@ export default class FightScene extends Phaser.Scene {
       });
     };
 
+    // Outros carregamentos...
+    console.log('Carregando imagem de transição...'); // Debug
+    this.load.image('transition-bg', 'backgrounds/transition.png');
+
+    // Garanta que o caminho está correto
+    this.load.image('transition-bg', 'backgrounds/transition.png');
+    // Debug: Lista todas as texturas carregadas
+    this.load.on('complete', () => {
+        console.log('Texturas carregadas:', this.textures.getTextureKeys());
+    });
+
     // 1. Primeiro carrega TODOS os backgrounds das fases antecipadamente
     fights.forEach((fight, index) => {
         this.load.image(`bg-phase-${index+1}`, `backgrounds/${fight.background}`);
     });
 
     // 2. Carrega a imagem de transição
-    this.load.image('transition-bg', 'backgrounds/transition-bg.png');
+    this.load.image('transition-bg', 'backgrounds/transition.png');
 
     // 3. Carrega sprites do jogador
     loadSprite('player-idle', this.currentFight.playerSprites.idle);
@@ -391,29 +400,31 @@ export default class FightScene extends Phaser.Scene {
 
   createHealthBars() {
     const healthBarsContainer = this.add.container(0, 20).setDepth(10);
-    
+
     // Barra do jogador (verde)
     this.healthBars.player = new HealthBar(
         this,
         this.cameras.main.width * 0.2,
         10,
-        700, // Largura reduzida
+        700,
         45,
-        0x4CAF50, // Verde
-        true // É o player
+        0x4CAF50,
+        true
     );
-    
+    this.healthBars.player.setRoundsWon(this.playerWins); // Usará o valor reiniciado (0)
+
     // Barra do inimigo (vermelha)
     this.healthBars.enemy = new HealthBar(
         this,
         this.cameras.main.width * 0.8,
         10,
-        700, // Largura reduzida
+        700,
         45,
-        0xF44336, // Vermelho
-        false // É o inimigo
+        0xF44336,
+        false
     );
-    
+    this.healthBars.enemy.setRoundsWon(this.enemyWins); // Usará o valor reiniciado (0)
+
     // Adiciona texto "VS" no centro
     const vsText = this.add.text(
         this.cameras.main.width / 2,
@@ -453,33 +464,53 @@ export default class FightScene extends Phaser.Scene {
   }
 
   createRoundDots() {
+    // Remove dots antigos
+    this.roundDots.player.forEach(dot => dot.destroy());
+    this.roundDots.enemy.forEach(dot => dot.destroy());
+    this.roundDots.player = [];
+    this.roundDots.enemy = [];
+
+    // Cria novos dots com valores zerados
     const dotSize = 20;
     const spacing = 40;
     const startX = this.cameras.main.width * 0.1 - spacing;
     const yPos = 80;
-    
+
     for (let i = 0; i < 2; i++) {
-      const dot = this.add.circle(
-        startX + (i * spacing * 2),
-        yPos,
-        dotSize,
-        i < this.playerWins ? 0x4CAF50 : 0x888888
-      ).setStrokeStyle(2, 0x333333);
-      this.roundDots.player.push(dot);
+        const dot = this.add.circle(
+            startX + (i * spacing * 2),
+            yPos,
+            dotSize,
+            0x888888 // Cinza (nenhuma vitória)
+        ).setStrokeStyle(2, 0x333333);
+        this.roundDots.player.push(dot);
     }
-    
+
     for (let i = 0; i < 2; i++) {
-      const dot = this.add.circle(
-        this.cameras.main.width * 0.9 + (i * spacing * 2),
-        yPos,
-        dotSize,
-        i < this.enemyWins ? 0xF44336 : 0x888888
-      ).setStrokeStyle(2, 0x333333);
-      this.roundDots.enemy.push(dot);
+        const dot = this.add.circle(
+            this.cameras.main.width * 0.9 + (i * spacing * 2),
+            yPos,
+            dotSize,
+            0x888888 // Cinza (nenhuma vitória)
+        ).setStrokeStyle(2, 0x333333);
+        this.roundDots.enemy.push(dot);
     }
   }
-
   createAnimations() {
+    // Remove animações existentes do jogador
+    ['player-idle', 'player-walk', 'player-attack', 'player-block', 'player-jump', 'player-dash'].forEach(key => {
+        if (this.anims.exists(key)) {
+            this.anims.remove(key);
+        }
+    });
+
+    // Remove animações existentes do inimigo
+    const enemyName = this.currentFight.enemy.toLowerCase();
+    [`${enemyName}-idle`, `${enemyName}-walk`, `${enemyName}-attack`, `${enemyName}-special`, `${enemyName}-jump`].forEach(key => {
+        if (this.anims.exists(key)) {
+            this.anims.remove(key);
+        }
+    });
     const createAnim = (key, spriteKey, frameConfig, frameRate = 8, repeat = -1) => {
       if (!this.textures.exists(spriteKey)) {
         console.error(`SpriteSheet ${spriteKey} não encontrada para animação ${key}`);
@@ -503,7 +534,6 @@ export default class FightScene extends Phaser.Scene {
     createAnim('player-dash', 'player-dash', { start: 0, end: 0 }, 15, 0);
 
     // Animações do inimigo com chaves únicas
-    const enemyName = this.currentFight.enemy.toLowerCase();
     createAnim(`${enemyName}-idle`, `${enemyName}-idle`, { start: 0, end: 0 });
     createAnim(`${enemyName}-walk`, `${enemyName}-walk`, { start: 0, end: this.currentFight.enemySprites.walk.frames - 1 });
     createAnim(`${enemyName}-attack`, `${enemyName}-attack`, { start: 0, end: this.currentFight.enemySprites.attack.frames - 1 }, 15, 0);
@@ -641,44 +671,29 @@ export default class FightScene extends Phaser.Scene {
     try {
         if (this.playerWins >= 2) {
             this.phaseWins++;
-            
             if (this.currentPhase >= this.totalPhases) {
                 await this.endGame(true);
             } else {
-                // Atualiza o VueComponent antes da transição
-                if (this.vueComponent) {
-                    this.vueComponent.currentRound = 1;
-                    this.vueComponent.playerWins = 0;
-                    this.vueComponent.enemyWins = 0;
-                }
-                
-                await safeDelay(1000); // Pequena pausa antes da transição
+                // Avança para a próxima fase mantendo as vitórias
+                await safeDelay(1000);
                 await this.advanceToNextPhase();
             }
         } else if (this.enemyWins >= 2) {
+            // Reinicia a fase atual e reseta as vitórias
+            if (this.vueComponent) {
+                this.vueComponent.currentRound = 1;
+                this.vueComponent.playerWins = 0;
+                this.vueComponent.enemyWins = 0;
+            }
             await this.endGame(false);
         } else {
+            // Continua no mesmo round
             this.currentRound++;
             this.resetFightState();
-            
-            if (this.vueComponent) {
-                this.vueComponent.updateRoundInfo(
-                    this.currentRound,
-                    this.playerWins,
-                    this.enemyWins
-                );
-            }
-            
-            if (this.roundTransition) {
-                await this.roundTransition.show(`Round ${this.currentRound}!`, 1500);
-            }
         }
     } catch (error) {
         console.error('Erro no handleFightOutcome:', error);
-        this.scene.restart({
-            vueComponentRef: this.vueComponent,
-            fightIndex: this.fightIndex
-        });
+        this.scene.restart();
     }
   }
 
@@ -710,45 +725,44 @@ export default class FightScene extends Phaser.Scene {
   async advanceToNextPhase() {
     if (this.showingPhaseTransition) return;
     this.showingPhaseTransition = true;
-    
+
     try {
         const nextFightIndex = this.fightIndex + 1;
         const nextFight = fights[nextFightIndex];
-        
+
         if (!nextFight) {
             await this.endGame(true);
             return;
         }
 
-        // Mostra a transição de fase com o novo background
+        // Mostra a transição de fase
         await this.phaseTransition.showPhaseTransition(
             this.currentPhase,
             this.currentPhase + 1,
-            nextFight.background // Passa o background da próxima fase
+            nextFight.background
         );
 
         // Limpa o estado atual
         if (this.roundTransition?.cleanup) {
             this.roundTransition.cleanup();
         }
-        
-        // Atualiza o VueComponent antes de mudar de cena
+
+        // Atualiza o VueComponent (reinicia contadores de round e vitórias)
         if (this.vueComponent) {
             this.vueComponent.currentRound = 1;
-            this.vueComponent.playerWins = 0;
-            this.vueComponent.enemyWins = 0;
+            this.vueComponent.playerWins = 0;  // Reinicia vitórias
+            this.vueComponent.enemyWins = 0;   // Reinicia vitórias
             this.vueComponent.currentPhase = nextFightIndex + 1;
         }
-        
-        // Inicia a próxima fase
+
+        // Inicia a próxima fase com contadores zerados
         this.scene.start('FightScene', {
             fightIndex: nextFightIndex,
             vueComponentRef: this.vueComponent,
             currentRound: 1,
-            playerWins: 0,
-            enemyWins: 0
+            playerWins: 0,  // Reinicia aqui também
+            enemyWins: 0    // Reinicia aqui também
         });
-        
     } catch (error) {
         console.error('Falha ao avançar fase:', error);
         this.scene.restart();
@@ -756,7 +770,6 @@ export default class FightScene extends Phaser.Scene {
         this.showingPhaseTransition = false;
     }
   }
-
   async endGame(playerWon) {
     try {
         this.showingPhaseTransition = true;

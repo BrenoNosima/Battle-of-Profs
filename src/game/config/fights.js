@@ -28,11 +28,11 @@ export default [
         enemy: 'Moreno',
         playerSprites: playerSpritesConfig,
         enemySprites: {
-            idle: {path: '/sprite/moreno/morenoParado.png', frameWidth: 80, frameHeight: 110, frames: 1},
-            walk: {path: '/sprite/moreno/morenoAndando.png', frameWidth: 70, frameHeight: 110, frames: 4},
-            attack: {path: '/sprite/moreno/morenoAtaque.png',frameWidth: 86.25, frameHeight: 110, frames: 4},
-            special: {path: '/sprite/moreno/morenoAtaqueEspecial.png',frameWidth: 140, frameHeight: 100, frames: 4},
-            jump: {path: '/sprite/moreno/morenoPulando.png', frameWidth: 80, frameHeight: 110, frames: 1},
+            idle: {path: '/sprite/Moreno/morenoParado.png', frameWidth: 80, frameHeight: 110, frames: 1},
+            walk: {path: '/sprite/Moreno/morenoAndando.png', frameWidth: 73, frameHeight: 110, frames: 4},
+            attack: {path: '/sprite/Moreno/morenoAtaque.png',frameWidth: 83.3, frameHeight: 110, frames: 4},
+            special: {path: '/sprite/Moreno/morenoAtaqueEspecial.png',frameWidth: 160, frameHeight: 100, frames: 4},
+            jump: {path: '/sprite/Moreno/morenoPulando.png', frameWidth: 80, frameHeight: 110, frames: 1},
         },
         enemyConfig: {
             // Configurações específicas do Moreno
@@ -49,9 +49,9 @@ export default [
         playerSprites: playerSpritesConfig,
         enemySprites: {
             idle: {path: '/sprite/cidao/cidaoParado.png', frameWidth: 67, frameHeight: 100, frames: 1},
-            walk: {path: '/sprite/cidao/cidaoAndando.png',frameWidth: 54, frameHeight: 100, frames: 4},
-            attack: {path: '/sprite/cidao/cidaoAtaque.png',frameWidth: 80, frameHeight: 90, frames: 4},
-            special: {path: '/sprite/cidao/cidaoAtaqueEspecial.png',frameWidth: 105, frameHeight: 90, frames: 1},
+            walk: {path: '/sprite/cidao/cidaoAndando.png',frameWidth: 55, frameHeight: 100, frames: 4},
+            attack: {path: '/sprite/cidao/cidaoAtaque.png',frameWidth: 77, frameHeight: 90, frames: 4},
+            special: {path: '/sprite/cidao/cidaoAtaqueEspecial.png',frameWidth: 80, frameHeight: 90, frames: 1},
             jump: {path: '/sprite/cidao/cidaoPulando.png', frameWidth: 80, frameHeight: 100, frames: 1},
         },
         enemyConfig: {
@@ -71,7 +71,7 @@ export default [
             idle: { path: '/sprite/hugo/hugoParado.png', frameWidth: 85, frameHeight: 125, frames: 1 },
             walk: { path: '/sprite/hugo/hugoAndando.png', frameWidth: 72.5, frameHeight: 110, frames: 4 },
             attack: { path: '/sprite/hugo/hugoAtaque.png', frameWidth: 77.5, frameHeight: 115, frames: 4 },
-            special: { path: '/sprite/hugo/hugoAtaqueEspecial.png', frameWidth: 110, frameHeight: 122, frames: 4 },
+            special: { path: '/sprite/hugo/hugoAtaqueEspecial.png', frameWidth: 160, frameHeight: 122, frames: 4 },
             jump: { path: '/sprite/hugo/hugoPulando.png', frameWidth: 97, frameHeight: 120, frames: 1 }
         },
         enemyConfig: {

@@ -42,18 +42,32 @@ export default class PhaseTransition {
   /**
    * Fade out da tela atual
    */
- async fadeOut() {
+  async fadeOut() {
     return new Promise(resolve => {
-        // Substitui o retângulo preto pela imagem de transição
-        this.overlay = this.scene.add.image(
-            this.scene.cameras.main.width / 2,
-            this.scene.cameras.main.height / 2,
-            'transition-bg' // Chave da imagem carregada
-        )
-        .setDisplaySize(this.scene.cameras.main.width, this.scene.cameras.main.height)
-        .setDepth(50)
-        .setAlpha(0);
+        // Debug: Verifica se a textura foi carregada
+        console.log('Texturas carregadas:', this.scene.textures.getTextureKeys());
+        
+        if (!this.scene.textures.exists('transition-bg')) {
+            console.error('ERRO: transition-bg não encontrada. Verifique o pré-carregamento.');
+            // Fallback: Usa um retângulo preto
+            this.overlay = this.scene.add.rectangle(
+                this.scene.cameras.main.width / 2,
+                this.scene.cameras.main.height / 2,
+                this.scene.cameras.main.width,
+                this.scene.cameras.main.height,
+                0x000000
+            ).setDepth(50);
+        } else {
+            // Usa a imagem normalmente
+            this.overlay = this.scene.add.image(
+                this.scene.cameras.main.width / 2,
+                this.scene.cameras.main.height / 2,
+                'transition-bg'
+            ).setDisplaySize(this.scene.cameras.main.width, this.scene.cameras.main.height);
+        }
 
+        this.overlay.setAlpha(0).setDepth(50);
+        
         this.scene.tweens.add({
             targets: this.overlay,
             alpha: 1,
@@ -62,7 +76,7 @@ export default class PhaseTransition {
             onComplete: resolve
         });
     });
-}
+  }
 
   /**
    * Mostra texto de transição entre fases
