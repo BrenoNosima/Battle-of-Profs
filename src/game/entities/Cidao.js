@@ -13,10 +13,6 @@ export default class Cidao extends Enemy {
             attackDamage: 15
         });
         
-        // Configurações específicas do Cidão
-        this.baseTint = 0x00ff00; // Verde
-        this.setTint(this.baseTint);
-        
         // Ajustes específicos de física
         this.attackRange = 85;
         this.attackCooldownTime = 1100;

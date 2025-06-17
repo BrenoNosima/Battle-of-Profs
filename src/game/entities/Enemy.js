@@ -36,10 +36,6 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         this.body.checkCollision.down = true;
         this.body.checkCollision.left = true;
         this.body.checkCollision.right = true;
-
-        // Aparência
-        this.baseTint = 0x00ffff;
-        this.setTint(this.baseTint);
     }
 
     // Método simplificado já que a colisão superior está desativada
