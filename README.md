@@ -1,5 +1,7 @@
 
-# 🎮 Battle of Profs
+# 🎮 Professor Stryke
+
+Game: https://professorstryke.netlify.app/
 
 > Um jogo de batalha 1x1 onde o estudante enfrenta professores mestres das artes marciais digitais, rumo à graduação na lendária **Faculdade do Código Supremo**.
 
