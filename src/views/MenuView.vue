@@ -41,10 +41,6 @@
       </ul>
     </div>
 
-    <!-- Imagem de introdução -->
-    <div v-else-if="showIntroImage" class="intro-image-container flex flex-col items-center justify-center">
-      <img :src="textoIntroPath" alt="Introdução" class="intro-image mb-8" />
-    </div>
 
     <!-- Vídeo de introdução -->
     <div v-else class="intro-video-container">
@@ -75,7 +71,6 @@ import logoPath from '@/assets/img/ChatGPT Image 13 de jun. de 2025, 22_10_03.pn
 // Renomear o arquivo seria uma boa prática para evitar problemas.
 // Assumindo que o arquivo foi copiado corretamente para src/assets/img/
 import backgroundPath from '@/assets/img/ChatGPT Image 13 de jun. de 2025, 21_23_22.png';
-import textoIntroPath from '@/assets/img/texto_intro.png';
 
 // Variável reativa para controlar se o vídeo está sendo exibido
 const showIntroImage = ref(false);
@@ -272,20 +267,6 @@ function playHoverSound() {
 .skip-btn:hover {
   background: #012643;
   color: #5ae8ec;
-}
-
-/* --- NOVO: Estilos para a imagem de introdução --- */
-.intro-image-container {
-  position: fixed; /* Garante que cobre toda a tela */
-  top: 0; left: 0; right: 0; bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.95);
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 
 .intro-image {

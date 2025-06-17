@@ -9,8 +9,8 @@ export default class Moreno extends Enemy {
         super(scene, x, y, texture, {
             animPrefix: 'moreno',
             health: 100,
-            speed: 200,
-            attackDamage: 8
+            speed: 300,
+            attackDamage: 15
         });
         
         // Configurações específicas do Moreno
@@ -30,6 +30,11 @@ export default class Moreno extends Enemy {
         
         this.startAttack();
         this.play(`${this.animPrefix}-special`, true);
+
+        // Toca o áudio do super ataque
+        if (this.scene.sound) {
+            this.scene.sound.play('super');
+        }
         
         // Efeito especial do Moreno - ataque em área
         const attackRadius = 120;

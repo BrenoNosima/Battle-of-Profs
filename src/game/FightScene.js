@@ -147,10 +147,18 @@ export default class FightScene extends Phaser.Scene {
     this.load.audio('block', '/sounds/block.mp3');
     this.load.audio('dash', '/sounds/dash.mp3');
     this.load.audio('music', '/sounds/musica-jogo.mp3');
-    this.load.audio('victory', '/sounds/super.mp3');
+    this.load.audio('super', '/sounds/super.mp3');
+    this.load.audio('musica-final', '/sounds/musica-final.mp3');
+
+    // 6. Videos
     this.load.video('video-fase2-3', '/videos/luta final.mp4');
     this.load.video('final', '/videos/final.mp4');
     // Remove os carregamentos duplicados de background que estavam aqui antes
+
+    // 7. Imagens de fundo adicionais
+    this.load.image('transicaoMC', '/backgrounds/transicaoMC.png');
+    this.load.image('morenoC', '/backgrounds/morenoC.png');
+    this.load.image('final', '/backgrounds/final.png');
 }
 
   async create() {
@@ -587,19 +595,41 @@ export default class FightScene extends Phaser.Scene {
 
   async showInitialInstructions() {
     if (!this.roundTransition) return;
-    
-    this.roundOver = true;
-    
-    try {
-      await this.roundTransition.showControlsScreen(5000);
-      this.roundOver = false;
-      this.controlsShown = true;
-      await this.roundTransition.show('FIGHT!', 1000);
-    } catch (error) {
-      console.error('Erro ao mostrar instruções:', error);
-      this.roundOver = false;
+    // Toca música de fundo em loop ao mostrar as instruções iniciais
+    if (!this.sound.get('music')) {
+      const music = this.sound.add('music', { loop: true, volume: 0.5 });
+      this.backgroundMusic = music;
+      music.play();
     }
-  }
+    this.roundOver = true;
+
+    try {
+        // Mostra a imagem antes do painel de controles
+        const intro = this.add.image(
+            this.cameras.main.width / 2,
+            this.cameras.main.height / 2,
+            'morenoC'
+        ).setOrigin(0.5).setDepth(100)
+         .setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+
+        // Exibe por 2 segundos
+        await new Promise(resolve => {
+            this.time.delayedCall(5000, () => {
+                intro.destroy();
+                resolve();
+            });
+        });
+
+        // Agora mostra o painel de controles normalmente
+        await this.roundTransition.showControlsScreen(5000);
+        this.roundOver = false;
+        this.controlsShown = true;
+        await this.roundTransition.show('FIGHT!', 1000);
+    } catch (error) {
+        console.error('Erro ao mostrar instruções:', error);
+        this.roundOver = false;
+    }
+}
 
   checkAttacks() {
     if (this.player?.isAttacking && this.checkHit(this.player, this.enemy)) {

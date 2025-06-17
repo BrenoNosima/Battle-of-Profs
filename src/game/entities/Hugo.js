@@ -9,8 +9,8 @@ export default class Hugo extends Enemy {
         super(scene, x, y, texture, {
             animPrefix: 'hugo',
             health: 150,
-            speed: 160,
-            attackDamage: 12
+            speed: 300,
+            attackDamage: 15
         });
         
         // Configurações específicas do Hugo
@@ -32,6 +32,11 @@ export default class Hugo extends Enemy {
         
         this.startAttack();
         this.play(`${this.animPrefix}-special`, true);
+
+        // Toca o áudio do super ataque
+        if (this.scene.sound) {
+            this.scene.sound.play('super');
+        }
         
         // Efeito especial do Hugo - ataque devastador
         const attackRange = 100;
