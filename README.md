@@ -52,7 +52,7 @@ Em um universo paralelo dentro de uma universidade, os professores se tornaram m
 * **HTML5 & CSS3** – Estrutura base e estilização.
 * **Figma / Canva** – Prototipagem e wireframes.
 * **Git & GitHub** – Versionamento e colaboração.
-* **Phaser 3 – Engine para criação do jogo 2D com cenas, sprites e animações.
+* **Phaser 3** – Engine para criação do jogo 2D com cenas, sprites e animações.
 
 ## 🚧 Status do Projeto
 
